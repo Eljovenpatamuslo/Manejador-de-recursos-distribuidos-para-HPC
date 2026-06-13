@@ -1,6 +1,10 @@
 #ifndef __TABLANODOS_H__
 #define __TABLANODOS_H__
 
+#include <assert.h>
+#include <stdlib.h>
+#include <time.h>
+
 typedef struct _NodoActivo {
     void* dato;
 
@@ -39,5 +43,16 @@ void tablanodos_destruir(TablaNodos tabla);
  * Inserta un nodo en la tabla, o actualiza su timestamp si ya se encontraba.
  */
 void tablanodos_insertar(TablaNodos tabla, void *dato);
+
+/**
+ * Borra todos los nodos que no se hayan anunciado nuevamente antes de que pase
+ * el tiempo de expiración.
+ */
+void tablanodos_borrar_expirados(TablaNodos tabla);
+
+/**
+ * Duplica el tamaño de la tabla rehasheando todos los nodos.
+ */
+void tablanodos_redimensionar(TablaNodos tabla);
 
 #endif /* __TABLANODOS_H__ */

@@ -1,7 +1,4 @@
 #include "tablanodos.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <time.h>
 
 TablaNodos tablanodos_crear(unsigned capacidad) {
 
@@ -31,7 +28,7 @@ void tablanodos_destruir(TablaNodos tabla) {
 	while(actual != NULL){
 		NodoActivo* sig = actual->sigLista;
 		
-        dest(actual->dato);
+        destr(actual->dato);
 		free(actual);
 
 		actual = sig;
@@ -45,48 +42,52 @@ void tablanodos_destruir(TablaNodos tabla) {
 
 void tablanodos_insertar(TablaNodos tabla, void *dato) {
 
-    if ((float)tabla->numNodos / tabla->capacidad >= FACTORDECARGA) {
-        tablanodos_redimensionar(tabla);
-    }
-
 	// Calculamos la posicion del dato dado, de acuerdo a la funcion hash.
     unsigned idx = hash(dato) % tabla->capacidad;
 
     // Buscamos si el dato ya existe para evitar duplicados
     NodoActivo *actual = tabla->nodos[idx];
     while (actual != NULL) {
-        if (comparar_ip(actual->dato, dato) == 0) { // Comparar por ip
+        if (comp(actual->dato, dato) == 0) {
             
-            actualizar_timestamp(actual->dato); // Actualizamos el timestamp del nodo
+            actualizar_timestamp(actual->dato);
             return; // No hay que agregar nuevos nodos
         }
         actual = actual->sigHash;
     }
 
-    // Si no existe, creamos el nodo
+    // Si no existe vemos si es necesario redimensionar
+    if (((float)tabla->numNodos+1) / tabla->capacidad >= FACTORDECARGA) {
+        tablanodos_redimensionar(tabla);
+
+        // Recalculamos la posicion del dato
+        idx = hash(dato) % tabla->capacidad;
+    }
+
+    // Creamos el nodo
     NodoActivo *nuevoNodo = malloc(sizeof(NodoActivo));
     assert(nuevoNodo != NULL);
     
 	nuevoNodo->dato = dato;
     nuevoNodo->antHash = NULL;
+    nuevoNodo->sigHash = tabla->nodos[idx];
 
     if(tabla->nodos[idx] != NULL){
         tabla->nodos[idx]->antHash = nuevoNodo;
     }
-    nuevoNodo->sigHash = tabla->nodos[idx];
+    
     tabla->nodos[idx] = nuevoNodo;
 
     // Insertar al final de la lista doblemente enlazada
-    nuevoNodo->sigLista = NULL;
     if (tabla->numNodos == 0) {
         nuevoNodo->antLista = NULL;
         tabla->primerNodo = nuevoNodo;
-        tabla->ultimoNodo = nuevoNodo;
     } else {
         nuevoNodo->antLista = tabla->ultimoNodo;
         tabla->ultimoNodo->sigLista = nuevoNodo;
-        tabla->ultimoNodo = nuevoNodo;
     }
+    nuevoNodo->sigLista = NULL;
+    tabla->ultimoNodo = nuevoNodo;
 
     tabla->numNodos++;
 }
@@ -97,7 +98,7 @@ void tablanodos_borrar_expirados(TablaNodos tabla){
     time_t tiempo_actual = time(NULL);
     NodoActivo *actual = tabla->primerNodo;
 
-    // Recorremos la lista global secuencialmente
+    // Recorremos la lista secuencialmente
     while (actual != NULL) {
         NodoActivo *sig = actual->sigLista; 
 
@@ -136,4 +137,35 @@ void tablanodos_borrar_expirados(TablaNodos tabla){
 
         actual = sig;
     }
+}
+
+void tablanodos_redimensionar(TablaNodos tabla){
+    unsigned nueva_capacidad = 2 * tabla->capacidad;
+    NodoActivo **nuevos_nodos = malloc(sizeof(NodoActivo*) * nueva_capacidad);
+    assert(nuevos_nodos != NULL);
+
+    // Inicializar el nuevo arreglo con NULL
+    for (unsigned idx = 0; idx < nueva_capacidad; ++idx) {
+        nuevos_nodos[idx] = NULL;
+    }
+
+    // Recorremos la tabla como lista
+    NodoActivo *actual = tabla->primerNodo;
+    while (actual != NULL) {
+        unsigned nuevo_idx = hash(actual->dato) % nueva_capacidad;
+
+        actual->antHash = NULL;
+        actual->sigHash = nuevos_nodos[nuevo_idx];
+        
+        if (nuevos_nodos[nuevo_idx] != NULL) {
+            nuevos_nodos[nuevo_idx]->antHash = actual;
+        }
+        nuevos_nodos[nuevo_idx] = actual;
+
+        actual = actual->sigLista;
+    }
+
+    free(tabla->nodos);
+    tabla->nodos = nuevos_nodos;
+    tabla->capacidad = nueva_capacidad;
 }
