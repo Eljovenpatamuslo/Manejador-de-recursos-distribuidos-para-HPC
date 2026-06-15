@@ -4,9 +4,20 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
+#include <stdint.h>
+
+typedef struct _DatosNodo {
+    char ip[16];
+    uint16_t puerto;
+    unsigned cpu;
+    unsigned mem;
+    unsigned gpu;
+} DatosNodo;
 
 typedef struct _NodoActivo {
-    void* dato;
+    DatosNodo *datos;
+    time_t ultimoAnuncio;
 
     struct _NodoActivo *antHash;
 	struct _NodoActivo *sigHash;
@@ -22,6 +33,8 @@ struct _TablaNodos {
 
     unsigned numNodos;
     unsigned capacidad;
+
+    pthread_mutex_t mutex;
 };
 
 typedef struct _TablaNodos *TablaNodos;
@@ -42,13 +55,13 @@ void tablanodos_destruir(TablaNodos tabla);
 /**
  * Inserta un nodo en la tabla, o actualiza su timestamp si ya se encontraba.
  */
-void tablanodos_insertar(TablaNodos tabla, void *dato);
+void tablanodos_insertar(TablaNodos tabla, DatosNodo *dato);
 
 /**
  * Borra todos los nodos que no se hayan anunciado nuevamente antes de que pase
  * el tiempo de expiración.
  */
-void tablanodos_borrar_expirados(TablaNodos tabla);
+static void tablanodos_borrar_expirados(TablaNodos tabla);
 
 /**
  * Duplica el tamaño de la tabla rehasheando todos los nodos.
