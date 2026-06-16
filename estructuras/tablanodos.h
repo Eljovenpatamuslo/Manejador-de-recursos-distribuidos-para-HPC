@@ -5,14 +5,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-#include <stdint.h>
+#include "utils.h"
 
 typedef struct _DatosNodo {
     char ip[16];
-    uint16_t puerto;
-    unsigned cpu;
-    unsigned mem;
-    unsigned gpu;
+    unsigned short puerto;
+    char recursos[128];
 } DatosNodo;
 
 typedef struct _NodoActivo {
@@ -61,11 +59,21 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *dato);
  * Borra todos los nodos que no se hayan anunciado nuevamente antes de que pase
  * el tiempo de expiración.
  */
-static void tablanodos_borrar_expirados(TablaNodos tabla);
+void tablanodos_borrar_expirados(TablaNodos tabla);
 
 /**
  * Duplica el tamaño de la tabla rehasheando todos los nodos.
  */
-void tablanodos_redimensionar(TablaNodos tabla);
+static void tablanodos_redimensionar(TablaNodos tabla);
+
+/**
+ * Devuelve el hash asociado a los datos.
+ */
+unsigned int hash(const DatosNodo *datos);
+
+/**
+ * Compara los nodos según la ip y el puerto.
+ */
+int comp(const DatosNodo *a, const DatosNodo *b);
 
 #endif /* __TABLANODOS_H__ */

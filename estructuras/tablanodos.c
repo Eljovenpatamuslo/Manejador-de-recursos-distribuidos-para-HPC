@@ -52,7 +52,7 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *datos) {
     // Buscamos si el dato ya existe para evitar duplicados
     NodoActivo *actual = tabla->nodos[idx];
     while (actual != NULL) {
-        if (comp(actual->datos, datos) == 0) {
+        if (comp_nodos(actual->datos, datos) == 0) {
             
             actual->ultimoAnuncio = time(NULL);
 
@@ -177,4 +177,16 @@ static void tablanodos_redimensionar(TablaNodos tabla){
     free(tabla->nodos);
     tabla->nodos = nuevosNodos;
     tabla->capacidad = nuevaCapacidad;
+}
+
+unsigned int hash(const DatosNodo *datos) {
+    return hash_ip_puerto(datos->ip, datos->puerto);
+}
+
+int comp_nodos(const DatosNodo *a, const DatosNodo *b) {
+    if (a->puerto != b->puerto) {
+        return (a->puerto < b->puerto) ? -1 : 1;
+    }
+    
+    return strcmp(a->ip, b->ip);
 }
