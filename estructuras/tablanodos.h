@@ -24,7 +24,7 @@ typedef struct _NodoActivo {
 	struct _NodoActivo *sigLista;
 } NodoActivo;
 
-struct _TablaNodos {
+typedef struct _TablaNodos {
     NodoActivo **nodos;
 	NodoActivo *primerNodo;
 	NodoActivo *ultimoNodo;
@@ -33,9 +33,7 @@ struct _TablaNodos {
     unsigned capacidad;
 
     pthread_mutex_t mutex;
-};
-
-typedef struct _TablaNodos *TablaNodos;
+} *TablaNodos;
 
 #define FACTORDECARGA 0.75
 #define TIEMPODEANUNCIO 15
@@ -67,13 +65,13 @@ void tablanodos_borrar_expirados(TablaNodos tabla);
 static void tablanodos_redimensionar(TablaNodos tabla);
 
 /**
- * Devuelve el hash asociado a los datos.
+ * Redirecciona los punteros de la tabla para desconectar el nodo.
  */
-unsigned int hash(const DatosNodo *datos);
+static void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 
 /**
  * Compara los nodos según la ip y el puerto.
  */
-int comp(const DatosNodo *a, const DatosNodo *b);
+static int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
 #endif /* __TABLANODOS_H__ */
