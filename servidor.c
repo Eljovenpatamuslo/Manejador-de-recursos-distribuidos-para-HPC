@@ -35,7 +35,7 @@ int create_and_bind_socket(const char *ip, int port) {
         return -1;
     }
 
-    // Permitir reuso del puerto (buena práctica para desarrollo)
+    // Permitir reuso del puerto
     int opt = 1;
     if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
         perror("setsockopt");
