@@ -1,11 +1,13 @@
 %forma de mandarle los datos
 % [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
 
+%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
+
 -module(job_manager).
+-include("job_manager.hrl").
 
 -compile(export_all).
-
--define(PUERTOC, 3954).
+-define(PUERTOC, 3956).
 -define(HOST, "localhost").
 -define(CONFIGCONNECT, [{active,false},{packet,0}]).
 -define(SEC, 1000).
@@ -17,33 +19,45 @@
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
 
-%[{{192.168.1.10,8100},[{cpu:1},{mem:2},{gpu:3}]}]
-%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
-%NODES [["192.168.1.10:8100:cpu:4:mem:8192:gpu:1"],["192.168.1.11:8101:cpu:2:mem:4096"]]
-%S = string:lexemes("192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096",";").
-connect_to_local_node() ->
+logFile(Msg) ->
+    file:write_file("logErl.txt",[Msg ++ "\n"],[append]).
+
+logFile(Msg,Args) ->
+    Str = io_lib:format(Msg,Args),
+    file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]).
+
+
+conectarse_a_nodo_local() ->
     case gen_tcp:connect(?HOST,?PUERTOC,?CONFIGCONNECT) of
-        {ok,SockC} -> {ok,SockC};
-        {error,Reason} -> io:fwrite("Error al conectarse al nodo, razon:~p ~n",[Reason]),exit(Reason) %handelear esto
+        {ok,SockC} -> 
+            logFile("Erlang se conecto al nodo local"),
+            {ok,SockC};
+        {error,Razon} -> 
+            logFile("Error al conectarse al nodo, razon:~p ~n",[Razon]),
+            exit(Razon) %handelear esto
     end.
 
 manager_init() ->
-    {ok,SockC} = connect_to_local_node(),
 
-    NodesPid = spawn(?MODULE,get_formated_nodes,[]),
+    logFile("---Log del manager de erlang---"),
+    {ok,SockC} = conectarse_a_nodo_local(),
+    spawn(?MODULE,wait_recv,[SockC]),
+
+    NodesPid = spawn(?MODULE,obtener_y_formatear_nodos,[]),
     register(get_nodes,NodesPid),
 
-    spawn(?MODULE,wait_recv,[SockC]),
 
     JobMapPid = spawn(?MODULE,job_lista,[maps:new()]),
     register(job_map,JobMapPid),
 
-    CommsPid = spawn(?MODULE,comms_manager_f,[SockC]),
-    register(comms_manager,CommsPid),
+    CommsPid = spawn(?MODULE,send_manager_f,[SockC]),
+    register(send_manager,CommsPid),
 
     ManagerPid = spawn(?MODULE,manager,[]),
     register(manager,ManagerPid).
 
+enviar_a_nodo(Msg) ->
+    send_manager ! Msg.
 format_nodes([Node]) -> 
     Map = maps:new(),
     case string:lexemes(Node,":") of
@@ -65,38 +79,29 @@ format_nodes([Node | Nodes]) ->
     Map2 = format_nodes(Nodes),
     maps:merge(Map1,Map2).
 
-get_random_resources(Nodes) ->
+obtener_recursos_para_jobs(Nodes) ->
+    todo,
     ["@192.168.1.2:cpu:2 @192.168.1.3:gpu:1","@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"].
     %Dirs = maps:keys(Nodes),
     %NodeSelected = maps:get(rand:uniform(length(Dirs)),Nodes),
     %maps:find("",NodeSelected)
 
-get_formated_nodes() ->
+obtener_y_formatear_nodos() ->
     receive
         {ok,Response} -> 
             Nodes = string:lexemes(Response,";"),
             ParsedNodes = format_nodes(Nodes),
-            manager ! {ok,ParsedNodes};
+            manager ! {ok,ParsedNodes},
+            obtener_y_formatear_nodos();
 
-        {error,Reason} -> 
-            io:fwrite("Error al recibir la lista de nodos, razon:~p ~n",[Reason]),
-            manager ! {error, Reason}
+        {error,Razon} -> 
+            logFile("Error al recibir la lista de nodos, razon:~p ~n",[Razon]),
+            manager ! {error, Razon}
     after 
         ?TIMEOUT ->
             close %haceralgo
     end.
 
-logFile({com,Msg}) ->
-    io:fwrite("~p~n",[Msg]),
-    file:write_file("logErl.txt",Msg,append);
-logFile({warn,Msg}) ->
-    io:fwrite("Warning: ~p~n",[Msg]),
-    file:write_file("logErl.txt",Msg,append);
-logFile({fatal,Msg,SockC}) ->
-    io:fwrite("Fatal: ~p~n",[Msg]),
-    file:write_file("logErl.txt",Msg,append),
-    gen_tcp:close(SockC),
-    exit(Msg).
 
 job_lista(JobMap) ->
     receive
@@ -134,43 +139,47 @@ wait_recv(SockC) ->
             Nodes = string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
             get_nodes ! {ok, Nodes},
             wait_recv(SockC);
-        {error,Reason} -> {error,Reason};
+        {error,Razon} -> 
+            logFile("Error al recibir mensaje del nodo, razon:~p ~n",[Razon]),
+            {error,Razon};
 
         _ -> wait_recv(SockC)
     end.
 
 
-comms_manager_f(SockC) ->
+send_manager_f(SockC) ->
     receive
         {jobRelease,JobId} -> 
             JOB_RELEASE = "JOB_RELEASE " ++ integer_to_list(JobId) ++ "\n",
             ok = gen_tcp:send(SockC, JOB_RELEASE);
-        {jobRequest, JobId, Resources} ->
-            JOB_REQUEST = "JOB_REQUEST " ++ integer_to_list(JobId) ++ " " ++ Resources ++ "\n",
+        {jobRequest, JobId, Recursos} ->
+            JOB_REQUEST = "JOB_REQUEST " ++ integer_to_list(JobId) ++ " " ++ Recursos ++ "\n",
             ok = gen_tcp:send(SockC, JOB_REQUEST);
         getNodes -> 
             ok = gen_tcp:send(SockC, "GET_NODES\n");
         close -> close %haceralgo
     end,
-comms_manager_f(SockC).
+    send_manager_f(SockC).
 
-create_job(Resource) -> 
+crear_job(Resource) -> 
     JobId = erlang:unique_integer([positive]),
     JobPid = spawn(?MODULE,acquire_loop,[JobId,Resource,0]),
     job_map ! {add,JobPid,JobId}.
 
 handle_nodes() ->
-    comms_manager ! getNodes,
+    send_manager ! getNodes,
     receive
         {ok,Nodos} -> Nodos;
-        {error,Reason} -> fuck
+        {error,Razon} -> 
+            logFile("No se pudo obtener los nodos, razon:~p ~n",[Razon]),
+            {error,Razon}
     end.
 
 manager() ->
-    FormatedNodes = handle_nodes(),    
-    io:fwrite("nodos: ~p~n", [FormatedNodes]),
-    ListOfList = get_random_resources(FormatedNodes),
-    lists:foreach(fun(Resource) -> create_job(Resource) end,ListOfList),
+    MapaNodos = handle_nodes(),    
+    logFile("nodos: ~p~n", [MapaNodos]),
+    Recursos = obtener_recursos_para_jobs(MapaNodos),
+    lists:foreach(fun(Recurso) -> crear_job(Recurso) end,Recursos),
     receive
         alljobsdone -> ok
     end,
@@ -179,59 +188,56 @@ manager() ->
 
 
 execute_payload(JobId) ->
-    io:fwrite("[Job ~p] Ejecutando procesamiento en el clúster simulado...~n", [JobId]),
+    logFile("[Job ~p] Ejecutando procesamiento en el clúster simulado...~n", [JobId]),
     timer:sleep(5 * ?SEC),
     
-    io:fwrite("[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
-    comms_manager ! {jobRelease,JobId},
+    logFile("[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
+    send_manager ! {jobRelease,JobId},
     job_map ! {remove,JobId},
-    io:fwrite("[Job ~p] Terminado correctamente.~n", [JobId]),
+    logFile("[Job ~p] Terminado correctamente.~n", [JobId]),
     ok.
 
-acquire_loop(JobId, Resources, Attempts) ->
-    io:fwrite("[Job ~p] Solicitando los recursos: ~p~n", [JobId, Resources]),
+acquire_loop(JobId, Recursos, Intentos) ->
+    logFile("[Job ~p] Solicitando los recursos: ~p~n", [JobId, Recursos]),
     
-    comms_manager ! {jobRequest, JobId, Resources},
+    send_manager ! {jobRequest, JobId, Recursos},
     
     receive
         jobGranted -> 
-           io:fwrite("[Job ~p] ¡ÉXITO! Todos los recursos concedidos.~n", [JobId]),
+           logFile("[Job ~p] ¡ÉXITO! Todos los recursos concedidos.~n", [JobId]),
             execute_payload(JobId);
             
         jobDenied ->
-            io:fwrite("[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", 
-                      [JobId, Resources]),
-            handle_failure(JobId, Resources, Attempts);
+            logFile("[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", [JobId, Recursos]),
+            handle_failure(JobId, Recursos, Intentos);
             
         jobTimeout ->
-            io:fwrite("[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", 
-                      [JobId, Resources]),
-            handle_failure(JobId, Resources, Attempts)
+            logFile("[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", [JobId, Recursos]),
+            handle_failure(JobId, Recursos, Intentos)
             
     after ?TIMEOUT ->
-        io:fwrite("[Job ~p] ERROR CRÍTICO: Timeout interno del planificador.~n", [JobId]),
-        handle_failure(JobId, Resources, Attempts)
+        logFile("[Job ~p] ERROR CRÍTICO: Timeout interno del planificador.~n", [JobId]),
+        handle_failure(JobId, Recursos, Intentos)
     end.
 
-handle_failure(JobId, Resources, Attempts) ->
-    NextAttempts = Attempts + 1,
+handle_failure(JobId, Recursos, Intentos) ->
+    SiguienteIntento = Intentos + 1,
     %% 2. Evitar Livelock: Dormir al proceso un tiempo exponencial con aleatoriedad
-    apply_backoff(JobId, NextAttempts),
+    aplicar_timeout(JobId, SiguienteIntento),
     
     %% 3. Reiniciar la máquina de estados desde la lista original limpia
-    io:fwrite("[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, NextAttempts]),
-    acquire_loop(JobId, Resources, NextAttempts).
+    logFile("[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, SiguienteIntento]),
+    acquire_loop(JobId, Recursos, SiguienteIntento).
 
 
 
-apply_backoff(JobId, Attempts) ->
-    BaseTime = 150, 
-    CapAttempts = lists:min([Attempts, 5]), 
+aplicar_timeout(JobId, Intentos) ->
+    TiempoBase = 150, 
+    Limitar = lists:min([Intentos, 5]), 
     
-    ExpTime = BaseTime * trunc(math:pow(2, CapAttempts)),
+    TiempoExponensial = TiempoBase * trunc(math:pow(2, Limitar)),
     Jitter = rand:uniform(300), 
     
-    TotalSleep = ExpTime + Jitter,
-    io:fwrite("[Job ~p] Respetando backoff de ~p ms para mitigar contención.~n", 
-              [JobId, TotalSleep]),
-    timer:sleep(TotalSleep).
+    TiempoTotalSleep = TiempoExponensial + Jitter,
+    logFile("[Job ~p] Respetando backoff de ~p ms para mitigar contención.~n", [JobId, TiempoTotalSleep]),
+    timer:sleep(TiempoTotalSleep).
