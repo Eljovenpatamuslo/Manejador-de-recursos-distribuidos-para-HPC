@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-#include "utils.h"
 #include "tablajobs.h"
 
 typedef struct _DatosNodo {
@@ -25,7 +24,7 @@ typedef struct _NodoActivo {
 	struct _NodoActivo *sigLista;
 } NodoActivo;
 
-typedef struct _TablaNodos {
+struct _TablaNodos {
     NodoActivo **nodos;
 	NodoActivo *primerNodo;
 	NodoActivo *ultimoNodo;
@@ -34,7 +33,8 @@ typedef struct _TablaNodos {
     unsigned capacidad;
 
     pthread_mutex_t mutex;
-} *TablaNodos;
+}; 
+typedef struct _TablaNodos *TablaNodos;
 
 #define FACTORDECARGA 0.75
 #define TIEMPODEANUNCIO 15
@@ -58,21 +58,15 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *dato);
  * Borra todos los nodos que no se hayan anunciado nuevamente antes de que pase
  * el tiempo de expiración.
  */
-void tablanodos_borrar_expirados(TablaNodos tabla);
+void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs, RecursosNodo recursos);
 
 /**
  * Duplica el tamaño de la tabla rehasheando todos los nodos.
  */
-static void tablanodos_redimensionar(TablaNodos tabla);
+void tablanodos_redimensionar(TablaNodos tabla);
 
-/**
- * Redirecciona los punteros de la tabla para desconectar el nodo.
- */
-static void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
+void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 
-/**
- * Compara los nodos según la ip y el puerto.
- */
-static int comp_nodos(const DatosNodo *a, const DatosNodo *b);
+int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
 #endif /* __TABLANODOS_H__ */

@@ -1,4 +1,5 @@
 #include "tablajobs.h"
+#include "recursos.h"
 
 TablaJobs tablajobs_crear() {
 	TablaJobs tabla = malloc(sizeof(struct _TablaJobs));
@@ -23,6 +24,7 @@ void tablajobs_destruir(TablaJobs tabla) {
         JobActivo *actual = tabla->tablaPorId[i];
         while(actual != NULL){
             JobActivo *sig = actual->sigJobId;
+            free(actual->datos->recReservados);
             free(actual->datos);
             free(actual);
             actual = sig;
@@ -48,7 +50,13 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
         if (actual->datos->jobId == datos->jobId) {
+            actual->datos->recReservados->cpu += datos->recReservados->cpu;
+            actual->datos->recReservados->mem += datos->recReservados->mem;
+            actual->datos->recReservados->gpu += datos->recReservados->gpu;
             pthread_mutex_unlock(&tabla->mutex);
+
+            free(datos->recReservados);
+            free(datos);
             return; // No hay que agregar nuevos jobs
         }
         actual = actual->sigJobId;
@@ -85,33 +93,7 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
     pthread_mutex_unlock(&tabla->mutex);
 }
 
-void tablajobs_borrar_por_id(TablaJobs tabla, unsigned long jobId) {
-    unsigned idx = jobId % MAX_JOBS;
-    JobActivo *jobAEliminar = NULL;
-    
-    pthread_mutex_lock(&tabla->mutex);
-
-    JobActivo *actual = tabla->tablaPorId[idx];
-    while (actual != NULL) {
-        JobActivo *sig = actual->sigJobId;
-        if (actual->datos->jobId == jobId) {
-            jobAEliminar = actual;
-            desconectar_job(tabla, actual);
-
-            tabla->cantJobs--;
-            break;
-        }
-    }
-
-    pthread_mutex_unlock(&tabla->mutex);
-
-    if (jobAEliminar != NULL) {
-        free(jobAEliminar->datos);
-        free(jobAEliminar);
-    }
-}
-
-void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto) {
+void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto, RecursosNodo recursos) {
     unsigned idx = hash_ip_puerto(ip, puerto) % MAX_NODOS;
     JobActivo *jobsABorrar = NULL; 
 
@@ -135,13 +117,15 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto
     
     while (jobsABorrar != NULL) {
         JobActivo *sig = jobsABorrar->sigJobId;
+        liberar_recursos(recursos, jobsABorrar->datos->recReservados);
+        free(jobsABorrar->datos->recReservados);
         free(jobsABorrar->datos);
         free(jobsABorrar);
         jobsABorrar = sig;
     }
 }
 
-static void desconectar_job(TablaJobs tabla, JobActivo* job) {
+void desconectar_job(TablaJobs tabla, JobActivo* job) {
     // Reajustamos los punteros de colisión de la tabla de jobs por id
     if (job->antJobId == NULL) {
         unsigned idx = job->datos->jobId % MAX_JOBS;
@@ -156,7 +140,7 @@ static void desconectar_job(TablaJobs tabla, JobActivo* job) {
 
     // Reajustamos los punteros de colisión de la tabla de jobs por nodo
     if (job->antJobNodo == NULL) {
-        unsigned nidx = hash(job->datos) % MAX_NODOS;
+        unsigned nidx = hash_ip_puerto(job->datos->nodoIp, job->datos->nodoPuerto) % MAX_NODOS;
         tabla->tablaPorNodo[nidx] = job->sigJobNodo;
     } else {
         job->antJobNodo->sigJobNodo = job->sigJobNodo;
@@ -165,4 +149,74 @@ static void desconectar_job(TablaJobs tabla, JobActivo* job) {
     if (job->sigJobNodo != NULL) {
         job->sigJobNodo->antJobNodo = job->antJobNodo;
     }
+}
+
+unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId, TipoRecurso rec) {
+    assert(tabla != NULL);
+    unsigned idx = jobId % MAX_JOBS;
+    unsigned long cantLiberada = 0;
+
+    pthread_mutex_lock(&tabla->mutex);
+
+    JobActivo *actual = tabla->tablaPorId[idx];
+    while (actual != NULL) {
+        if (actual->datos->jobId == jobId) {
+            // Identificamos el recurso y guardamos cuánto tenía asignado
+            if (rec == CPU) {
+                cantLiberada = actual->datos->recReservados->cpu;
+                actual->datos->recReservados->cpu = 0;
+            } else if (rec == MEM) {
+                cantLiberada = actual->datos->recReservados->mem;
+                actual->datos->recReservados->mem = 0;
+            } else if (rec == GPU) {
+                cantLiberada = actual->datos->recReservados->gpu;
+                actual->datos->recReservados->gpu = 0;
+            }
+
+            // Si ya no le queda ningún recurso asignado, lo borramos físicamente
+            if (actual->datos->recReservados->cpu == 0 &&
+                actual->datos->recReservados->mem == 0 &&
+                actual->datos->recReservados->gpu == 0) {
+                
+                desconectar_job(tabla, actual);
+                tabla->cantJobs--;
+
+                free(actual->datos->recReservados);
+                free(actual->datos);
+                free(actual);
+            }
+            
+            pthread_mutex_unlock(&tabla->mutex);
+            return cantLiberada; 
+        }
+        actual = actual->sigJobId;
+    }
+
+    pthread_mutex_unlock(&tabla->mutex);
+    return 0; // No se encontró el job
+}
+
+void tablajobs_insertar_o_actualizar(TablaJobs tabla, DatosJob *datos, TipoRecurso rec, unsigned long cant) {
+    assert(tabla != NULL);
+    unsigned idx = datos->jobId % MAX_JOBS;
+
+    pthread_mutex_lock(&tabla->mutex);
+
+    // Buscar si ya existe
+    JobActivo *actual = tabla->tablaPorId[idx];
+    while (actual != NULL) {
+        if (actual->datos->jobId == datos->jobId) {
+            if (rec == CPU) actual->datos->recReservados->cpu = cant;
+            else if (rec == MEM) actual->datos->recReservados->mem = cant;
+            else if (rec == GPU) actual->datos->recReservados->gpu = cant;
+
+            pthread_mutex_unlock(&tabla->mutex);
+            return;
+        }
+        actual = actual->sigJobId;
+    }
+    pthread_mutex_unlock(&tabla->mutex);
+
+    // Si no existe, insertamos el job
+    tablajobs_insertar(tabla, datos);
 }

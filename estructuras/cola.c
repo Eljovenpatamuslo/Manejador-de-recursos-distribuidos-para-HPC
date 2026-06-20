@@ -10,33 +10,25 @@ Cola cola_crear(){
 }
 
 void cola_destruir(Cola cola){
-    pthread_mutex_lock(&cola->mutex);
     GNode *actual = cola->primero;
     while (actual != NULL) {
+        GNode *sig = actual->sig;
         free(actual->dato);
         free(actual);
+        actual = sig;
     }
-    pthread_mutex_unlock(&cola->mutex);
-    pthread_mutex_destroy(&cola->mutex);
+    free(cola);
 }
 
 int cola_es_vacia(Cola cola){
-    int flag;
-    pthread_mutex_lock(&cola->mutex);   
-    flag = cola->primero == NULL;
-    pthread_mutex_unlock(&cola->mutex);
-    return flag;
+    return cola->primero == NULL;
 }
 
-void* cola_desencolar(Cola cola){
-    void *dato;
+void* cola_inicio(Cola cola) {
+    void *dato = NULL;
 
-    pthread_mutex_lock(&cola->mutex);
-
-    dato = cola->primero->dato;
-    cola->primero = cola->primero->sig;
-    if (cola->primero == NULL) {
-        cola->ultimo = NULL;
+    if (cola->primero != NULL) {
+        dato = cola->primero->dato;
     }
 
     return dato;
@@ -46,10 +38,27 @@ void cola_encolar(Cola cola, void* dato){
     GNode *nuevoNodo = malloc(sizeof(GNode));
 	assert(nuevoNodo != NULL);
 
-	nuevoNodo->sig = cola->primero;
+	nuevoNodo->sig = NULL;
 	nuevoNodo->dato = dato;
-    if (cola->ultimo == NULL) {
+
+    if (cola->primero == NULL) {
+        cola->primero = nuevoNodo;
+        cola->ultimo = nuevoNodo;
+    } else {
+        cola->ultimo->sig = nuevoNodo;
         cola->ultimo = nuevoNodo;
     }
 }
 
+void cola_desencolar(Cola cola){
+    if (cola->primero != NULL) {
+        GNode *temp = cola->primero;
+        cola->primero = cola->primero->sig;
+
+        if (cola->primero == NULL) {
+            cola->ultimo = NULL;
+        }
+
+        free(temp);
+    }
+}

@@ -38,7 +38,7 @@ void tablanodos_destruir(TablaNodos tabla) {
 }
 
 void tablanodos_insertar(TablaNodos tabla, DatosNodo *datos) {
-    unsigned hashDatos = hash(datos);
+    unsigned hashDatos = hash_ip_puerto(datos->ip, datos->puerto);
 
     pthread_mutex_lock(&tabla->mutex);
 
@@ -92,7 +92,7 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *datos) {
     pthread_mutex_unlock(&tabla->mutex);
 }
 
-void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs) {
+void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs, RecursosNodo recursos) {
     assert(tablaNodos != NULL);
 
     time_t tiempoActual = time(NULL);
@@ -119,14 +119,14 @@ void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs) {
 
     while (nodosExpirados != NULL) {
         NodoActivo *sig = nodosExpirados->sigHash;
-        tablajobs_borrar_por_nodo(tablaJobs, nodosExpirados->datos->ip, nodosExpirados->datos->puerto);
+        tablajobs_borrar_por_nodo(tablaJobs, nodosExpirados->datos->ip, nodosExpirados->datos->puerto, recursos);
         free(nodosExpirados->datos);
         free(nodosExpirados);
         nodosExpirados = sig;
     }
 }
 
-static void tablanodos_redimensionar(TablaNodos tabla){
+void tablanodos_redimensionar(TablaNodos tabla){
     unsigned nuevaCapacidad = 2 * tabla->capacidad;
     NodoActivo **nuevosNodos = calloc(nuevaCapacidad, sizeof(NodoActivo*));
     assert(nuevosNodos != NULL);
@@ -134,7 +134,7 @@ static void tablanodos_redimensionar(TablaNodos tabla){
     // Recorremos la tabla como lista
     NodoActivo *actual = tabla->primerNodo;
     while (actual != NULL) {
-        unsigned nuevoIdx = hash(actual->datos) % nuevaCapacidad;
+        unsigned nuevoIdx = hash_ip_puerto(actual->datos->ip, actual->datos->puerto) % nuevaCapacidad;
 
         actual->antHash = NULL;
         actual->sigHash = nuevosNodos[nuevoIdx];
@@ -152,7 +152,7 @@ static void tablanodos_redimensionar(TablaNodos tabla){
     tabla->capacidad = nuevaCapacidad;
 }
 
-static void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo) {
+void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo) {
     // Reajustamos los punteros de la lista
     if (nodo->antLista == NULL) {
         tabla->primerNodo = nodo->sigLista;
@@ -181,7 +181,7 @@ static void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo) {
     tabla->numNodos--;
 }
 
-static int comp_nodos(const DatosNodo *a, const DatosNodo *b) {
+int comp_nodos(const DatosNodo *a, const DatosNodo *b) {
     if (a->puerto != b->puerto) {
         return (a->puerto < b->puerto) ? -1 : 1;
     }

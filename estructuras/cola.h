@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <assert.h>
 
 typedef void (*FuncionDestructora)(void *dato);
 typedef void *(*FuncionCopia)(void *dato);
@@ -19,7 +20,6 @@ typedef struct _GNode {
 typedef struct _Cola {
     GNode* primero;
     GNode* ultimo;
-    pthread_mutex_t mutex;
 } *Cola;
 
 Cola cola_crear();
@@ -32,6 +32,6 @@ void* cola_inicio(Cola);
 
 void cola_encolar(Cola, void*);
 
-void* cola_desencolar(Cola);
+void cola_desencolar(Cola);
 
 #endif
