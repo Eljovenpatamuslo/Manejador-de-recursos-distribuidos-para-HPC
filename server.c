@@ -8,11 +8,13 @@
 #include <stdlib.h>
 #include <sys/epoll.h>
 
-#define PUBLIC_DIR "127.0.0.2"
-#define PRIVATE_DIR "127.0.0.2"
-#define PUERTO_TCP 8000
-#define PUERTO_UDP 8100
+#define PUBLIC_DIR "127.0.0.1"
+#define LOCAL_DIR "127.0.0.2"
+#define PUERTO_TCP 12000
+#define PUERTO_UDP 12529
 #define MAX_EV_EPOLL 64
+
+#define debug(i) fprintf(stderr, "HOLA: %d\n", i);
 
 int public_listen_sock;
 int local_listen_sock;
@@ -20,8 +22,8 @@ int udp_sock;
 int epollfd;
 int timer_sock;
 
-static void agregar_socket_epoll(int socket, int evFlags, void *evDataPtr,
-                                 int epollCtlFlags);
+static int agregar_socket_epoll(int socket, int evFlags, void *evDataPtr,
+                                int epollCtlFlags);
 static void manejar_conn_sock_epoll(ClienteConexion *cliente);
 static int aceptar_listen_sock_epoll(int eventfd);
 static void rearmar_fd_epoll(int eventfd);
@@ -47,18 +49,23 @@ static int aceptar_listen_sock_epoll(int eventfd) {
     return 0;
 }
 
-void agregar_socket_epoll(int socket, int evFlags, void *evDataPtr,
-                          int epollCtlFlags) {
+int agregar_socket_epoll(int socket, int evFlags, void *evDataPtr,
+                         int epollCtlFlags) {
     struct epoll_event ev;
     ev.events = evFlags;
-    ev.data.fd = socket;
-    ev.data.ptr = evDataPtr;
+
+    if (evDataPtr != NULL) {
+        ev.data.ptr = evDataPtr;
+    } else {
+        ev.data.fd = socket;
+    }
 
     if (epoll_ctl(epollfd, epollCtlFlags, socket, &ev) == -1) {
-        perror("epoll_ctl");
-        free(evDataPtr);
-        exit(EXIT_FAILURE);
+        perror("agregar_socket_epoll: epoll_ctl");
+        return -1;
     }
+
+    return 0;
 }
 
 void *gestionar_epoll(void *arg) {
@@ -67,6 +74,7 @@ void *gestionar_epoll(void *arg) {
 
     for (int num_fds, n;;) {
         num_fds = epoll_wait(epollfd, events, MAX_EV_EPOLL, -1);
+
         if (num_fds == -1)
             perror("epoll_wait");
 
@@ -75,7 +83,7 @@ void *gestionar_epoll(void *arg) {
 
             if (eventfd == timer_sock) {
                 // Debo anunciarme
-                anuncio_broadcast(udp_sock, PUERTO_UDP);
+                manejar_timer(timer_sock, udp_sock, PUERTO_UDP);
                 agregar_socket_epoll(eventfd, EPOLLIN | EPOLLONESHOT, NULL,
                                      EPOLL_CTL_MOD);
             }
@@ -113,7 +121,7 @@ void *gestionar_epoll(void *arg) {
 
 int main() {
     public_listen_sock = crear_nonblocking_socket(PUBLIC_DIR, PUERTO_TCP);
-    local_listen_sock = crear_nonblocking_socket(PUBLIC_DIR, PUERTO_TCP);
+    local_listen_sock = crear_nonblocking_socket(LOCAL_DIR, PUERTO_TCP);
     udp_sock = crear_socket_udp_broadcast(PUERTO_UDP);
     timer_sock = crear_timer_anuncio(5);
 

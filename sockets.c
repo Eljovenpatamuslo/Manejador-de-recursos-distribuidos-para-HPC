@@ -3,13 +3,13 @@
 int crear_nonblocking_socket(const char *ip, int port) {
     int sfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sfd == -1) {
-        perror("socket");
+        perror("crear_nonblocking_socket: socket");
         return -1;
     }
 
     int opt = 1;
     if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-        perror("setsockopt");
+        perror("crear_nonblocking_socket: setsockopt");
         close(sfd);
         return -1;
     }
@@ -20,20 +20,20 @@ int crear_nonblocking_socket(const char *ip, int port) {
     addr.sin_port = htons(port);
 
     if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0) {
-        perror("inet_pton");
+        perror("crear_nonblocking_socket: inet_pton");
         close(sfd);
         return -1;
     }
 
     if (bind(sfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        perror("bind");
+        perror("crear_nonblocking_socket: bind");
         close(sfd);
         return -1;
     }
 
     // SOMAXCONN tamaño máximo de cola
     if (listen(sfd, SOMAXCONN) == -1) {
-        perror("listen");
+        perror("crear_nonblocking_socket: listen");
         close(sfd);
         return -1;
     }
@@ -44,14 +44,14 @@ int crear_nonblocking_socket(const char *ip, int port) {
 int crear_socket_udp_broadcast(int puerto) {
     int udp_sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
     if (udp_sock == -1) {
-        perror("socket udp");
+        perror("crear_socket_udp_broadcast: socket udp");
         return -1;
     }
 
     int broadcast_enable = 1;
     if (setsockopt(udp_sock, SOL_SOCKET, SO_BROADCAST, &broadcast_enable,
                    sizeof(broadcast_enable)) == -1) {
-        perror("setsockopt SO_BROADCAST");
+        perror("crear_socket_udp_broadcast: setsockopt SO_BROADCAST");
         close(udp_sock);
         return -1;
     }
@@ -66,7 +66,7 @@ int crear_socket_udp_broadcast(int puerto) {
     addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(udp_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        perror("bind udp");
+        perror("crear_socket_udp_broadcast: bind udp");
         close(udp_sock);
         return -1;
     }
@@ -96,22 +96,4 @@ int crear_timer_anuncio(int intervalo_segundos) {
     }
 
     return tfd;
-}
-
-void anuncio_broadcast(int udp_sock, int puerto_udp) {
-    char mensaje_anuncio[256];
-    snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE puerto recursos\n");
-
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(puerto_udp);
-    dest_addr.sin_addr.s_addr =
-        inet_addr("255.255.255.255"); // IP de Broadcast universal
-
-    sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
-           (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-
-    printf("Anuncio broadcast enviado.\n");
 }

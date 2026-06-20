@@ -268,3 +268,24 @@ void registrar_nodo(int udp_sock) {
         }
     }
 }
+
+void manejar_timer(int timerSocket, int udp_sock, int puerto_udp) {
+    // Vacío el timerfd para que epoll no siga notificando
+    uint64_t exp;
+    read(timerSocket, &exp, sizeof(exp));
+
+    char mensaje_anuncio[256];
+    snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
+             "ANNOUNCE puerto recursos\n");
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(puerto_udp);
+    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
+
+    sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
+           (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+
+    printf("Anuncio broadcast enviado.\n");
+}

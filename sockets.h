@@ -11,4 +11,3 @@
 int crear_nonblocking_socket(const char *ip, int port);
 int crear_socket_udp_broadcast(int puerto);
 int crear_timer_anuncio(int intervalo_segundos);
-void anuncio_broadcast(int udp_sock, int puerto_udp);
