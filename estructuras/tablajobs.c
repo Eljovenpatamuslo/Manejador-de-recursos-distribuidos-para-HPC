@@ -119,7 +119,7 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto
 
     JobActivo *actual = tabla->tablaPorNodo[idx];
     while (actual != NULL) {
-        JobActivo *sig = actual->sigJobId;
+        JobActivo *sig = actual->sigJobNodo;
 
         if (strcmp(ip, actual->datos->nodoIp) == 0 && puerto == actual->datos->nodoPuerto) {
             desconectar_job(tabla, actual);

@@ -6,6 +6,7 @@
 #include <time.h>
 #include <pthread.h>
 #include "utils.h"
+#include "tablajobs.h"
 
 typedef struct _DatosNodo {
     char ip[16];

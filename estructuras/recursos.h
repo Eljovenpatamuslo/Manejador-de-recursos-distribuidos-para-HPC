@@ -1,41 +1,52 @@
 #ifndef __RECURSOS_H__
 #define __RECURSOS_H__
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <sys/sysinfo.h>
-#include <dirent.h>
-#include <string.h>
 #include <assert.h>
+#include "cola.h"
+#include "tablajobs.h"
 
-struct _RecursosNodo {
-    unsigned int cpu;
-    unsigned long mem;
-    unsigned int gpu;
+typedef enum {
+    CPU,
+    MEM,
+    GPU
+} TipoRecurso;
+
+typedef struct _Solicitud {
+    unsigned long jobId;
+    char ip[16];
+    unsigned short puerto;
+    unsigned long cant;
+}; 
+typedef struct _Solicitud *Solicitud;
+
+typedef struct _Recurso {
+    unsigned long capacidad;
+    unsigned long cantDisp;
+    Cola solicitudPend;
+
+    pthread_mutex_t mutex;
+}; 
+typedef struct _Recurso *Recurso;
+
+typedef struct _RecursosNodo {
+    Recurso cpu;
+    Recurso mem;
+    Recurso gpu;
 };
-
-typedef struct _RecursosNodo* RecursosNodo;
-
-/**
- * Retorna la cantidad de cpus que tiene la computadora.
- */
-unsigned int obtener_cpus();
+typedef struct _RecursosNodo *RecursosNodo;
 
 /**
- * Retorna la cantidad de memoria en MB que tiene la computadora.
+ * 
  */
-unsigned long obtener_mem();
-
-/**
- * Retorna la cantidad de placas de video que tiene la computadora.
- */
-unsigned int obtener_gpus();
+Recurso inicializar_recurso(unsigned long capacidad)
 
 /**
  * Retorna una estructura con la cantidad de cada recurso disponible.
  */
 RecursosNodo inicializar_recursos_locales();
+
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
+                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto)
 
 #endif /* __RECURSOS_H__ */

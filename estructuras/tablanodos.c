@@ -92,21 +92,21 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *datos) {
     pthread_mutex_unlock(&tabla->mutex);
 }
 
-void tablanodos_borrar_expirados(TablaNodos tabla) {
-    assert(tabla != NULL);
+void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs) {
+    assert(tablaNodos != NULL);
 
     time_t tiempoActual = time(NULL);
     NodoActivo *nodosExpirados = NULL; 
 
-    pthread_mutex_lock(&tabla->mutex);
-    NodoActivo *actual = tabla->primerNodo;
+    pthread_mutex_lock(&tablaNodos->mutex);
+    NodoActivo *actual = tablaNodos->primerNodo;
 
     // Recorremos la lista secuencialmente
     while (actual != NULL) {
         NodoActivo *sig = actual->sigLista; 
         
         if (tiempoActual - actual->ultimoAnuncio > 15) {
-            desconectar_nodo(tabla, actual);
+            desconectar_nodo(tablaNodos, actual);
             
             actual->sigHash = nodosExpirados;
             nodosExpirados = actual;
@@ -115,10 +115,11 @@ void tablanodos_borrar_expirados(TablaNodos tabla) {
         actual = sig;
     }
     
-    pthread_mutex_unlock(&tabla->mutex);
+    pthread_mutex_unlock(&tablaNodos->mutex);
 
     while (nodosExpirados != NULL) {
         NodoActivo *sig = nodosExpirados->sigHash;
+        tablajobs_borrar_por_nodo(tablaJobs, nodosExpirados->datos->ip, nodosExpirados->datos->puerto);
         free(nodosExpirados->datos);
         free(nodosExpirados);
         nodosExpirados = sig;
