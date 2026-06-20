@@ -73,3 +73,45 @@ int crear_socket_udp_broadcast(int puerto) {
 
     return udp_sock;
 }
+
+int crear_timer_anuncio(int intervalo_segundos) {
+    int tfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+    if (tfd == -1) {
+        perror("timerfd_create");
+        return -1;
+    }
+
+    struct itimerspec ts;
+    // Primera vez que se dispara
+    ts.it_value.tv_sec = intervalo_segundos;
+    ts.it_value.tv_nsec = 0;
+    // Intervalo de repetición
+    ts.it_interval.tv_sec = intervalo_segundos;
+    ts.it_interval.tv_nsec = 0;
+
+    if (timerfd_settime(tfd, 0, &ts, NULL) == -1) {
+        perror("timerfd_settime");
+        close(tfd);
+        return -1;
+    }
+
+    return tfd;
+}
+
+void anuncio_broadcast(int udp_sock, int puerto_udp) {
+    char mensaje_anuncio[256];
+    snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
+             "ANNOUNCE puerto recursos\n");
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(puerto_udp);
+    dest_addr.sin_addr.s_addr =
+        inet_addr("255.255.255.255"); // IP de Broadcast universal
+
+    sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
+           (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+
+    printf("Anuncio broadcast enviado.\n");
+}
