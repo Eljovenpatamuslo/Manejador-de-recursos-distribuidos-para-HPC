@@ -84,9 +84,8 @@ handle_failure(JobId, Acquired, Original, Attempts) ->
 
 
 %% @doc Libera recursivamente todos los recursos esperando confirmación para evitar carreras.
-release_all(_JobId, []) ->
-    ok;
-release_all(JobId, [Resource | Rest]) ->
+%% 
+release_all(JobId, Resources) ->
     io:fwrite("[Job ~p] Rollback/Liberación -> ~p~n", [JobId, Resource]),
     
     %% Formateamos la liberación según el protocolo ASCII del TP
