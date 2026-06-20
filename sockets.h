@@ -8,3 +8,4 @@
 #include <unistd.h>
 
 int crear_nonblocking_socket(const char *ip, int port);
+int crear_socket_udp_broadcast(int puerto);
