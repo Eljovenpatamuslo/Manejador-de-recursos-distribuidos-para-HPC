@@ -22,3 +22,4 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje);
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje);
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp);
 void registrar_nodo(int udp_sock);
+void anuncio_broadcast(int udp_sock, int puerto_udp);

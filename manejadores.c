@@ -1,9 +1,9 @@
 #include "manejadores.h"
 
-ClienteConexion *crear_cliente(int eventfd, int tipo) {
+ClienteConexion *crear_cliente(int clienteFD, int tipo) {
     ClienteConexion *nuevo_cliente = malloc(sizeof(ClienteConexion));
 
-    nuevo_cliente->fd = eventfd;
+    nuevo_cliente->fd = clienteFD;
 
     nuevo_cliente->tipo = tipo;
 
@@ -17,7 +17,9 @@ int leer_y_procesar_cliente(ClienteConexion *cliente) {
         cliente->fd, cliente->buffer + cliente->bytes_in_buffer, espacio_libre);
 
     if (bytes_leidos == 0) {
-        printf("El cliente FD %d se ha desconectado.\n", cliente->fd);
+        printf("[%s %d] Desconexion\n",
+               cliente->tipo == CLIENTE_AGENTE_C ? "AGENTE C" : "ERLANG",
+               cliente->fd);
         return 1;
     }
 
@@ -66,7 +68,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
     int cantidad;
 
     if (sscanf(mensaje, "%15s", comando) != 1) {
-        fprintf(stderr, "Recibida línea vacía o mal formada del fd %d\n",
+        fprintf(stderr, "[AGENTE C %d] Linea vacia o mal formada\n",
                 cliente->fd);
         return;
     }
@@ -75,7 +77,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
 
         if (sscanf(mensaje, "RESERVE %d %15s %d", &job_id, recurso,
                    &cantidad) == 3) {
-            printf("[FD %d] Solicita RESERVE: Job=%d, Recurso=%s, "
+            printf("[AGENTE C %d] Solicita RESERVE: Job=%d, Recurso=%s, "
                    "Cantidad=%d\n",
                    cliente->fd, job_id, recurso, cantidad);
 
@@ -91,7 +93,8 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
     } else if (strcmp(comando, "GRANTED") == 0) {
 
         if (sscanf(mensaje, "GRANTED %d", &job_id) == 1) {
-            printf("[FD %d] Concedió GRANTED: Job=%d\n", cliente->fd, job_id);
+            printf("[AGENTE C %d] Concedio GRANTED: Job=%d\n", cliente->fd,
+                   job_id);
 
             // TODO Lógica:
             // - Tú pediste un recurso y te lo dieron.
@@ -102,7 +105,8 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
     } else if (strcmp(comando, "DENIED") == 0) {
 
         if (sscanf(mensaje, "DENIED %d", &job_id) == 1) {
-            printf("[FD %d] Denegó DENIED: Job=%d\n", cliente->fd, job_id);
+            printf("[AGENTE C %d] Denego DENIED: Job=%d\n", cliente->fd,
+                   job_id);
 
             // TODO Lógica:
             // - Tu petición fue rechazada. Avisar a Erlang.
@@ -112,7 +116,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
 
         if (sscanf(mensaje, "RELEASE %d %15s %d", &job_id, recurso,
                    &cantidad) == 3) {
-            printf("[FD %d] Notifica RELEASE: Job=%d, Recurso=%s, "
+            printf("[AGENTE C %d] Notifica RELEASE: Job=%d, Recurso=%s, "
                    "Cantidad=%d\n",
                    cliente->fd, job_id, recurso, cantidad);
 
@@ -136,7 +140,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje) {
         int offset = 0;
 
         if (sscanf(mensaje, "JOB_REQUEST %d%n", &job_id, &offset) == 1) {
-            printf("[Erlang FD %d] Inicia Job ID: %d\n", cliente->fd, job_id);
+            printf("[ERLANG %d] Inicia Job ID: %d\n", cliente->fd, job_id);
 
             // Colocamos un puntero justo donde terminó de leer el job_id
             const char *ptr = mensaje + offset;
@@ -177,21 +181,22 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje) {
 
             // Cuando el while termina, significa que ya procesamos todos los
             // recursos.
-            printf("[Erlang FD %d] Finalizado el parseo de dependencias para "
+            printf("[ERLANG %d] Finalizado el parseo de dependencias para "
                    "Job %d.\n",
                    cliente->fd, job_id);
 
         } else {
-            fprintf(stderr, "[Erlang] Error de sintaxis en el encabezado del "
-                            "JOB_REQUEST\n");
+            fprintf(stderr,
+                    "[ERLANG %d] Error de sintaxis en el encabezado del "
+                    "JOB_REQUEST\n",
+                    cliente->fd);
         }
     }
 
     // 2. Comando: GET NODES
     else if (strncmp(mensaje, "GET NODES", 9) == 0) {
-        printf(
-            "[Erlang FD %d] Solicitó la lista de nodos activos descubiertos\n",
-            cliente->fd);
+        printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
+               cliente->fd);
 
         // TODO Lógica:
         // - Recorrer tu tabla de nodos activos (la que actualiza el socket
@@ -207,7 +212,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje) {
     else if (strncmp(mensaje, "JOB_CONCLUDE", 12) == 0) {
         int job_id;
         if (sscanf(mensaje, "JOB_CONCLUDE %d", &job_id) == 1) {
-            printf("[Erlang FD %d] Planificador notifica fin de Job ID: %d\n",
+            printf("[ERLANG %d] Planificador notifica fin de Job ID: %d\n",
                    cliente->fd, job_id);
 
             // TODO Lógica:
@@ -249,7 +254,7 @@ void registrar_nodo(int udp_sock) {
 
             if (inet_ntop(AF_INET, &(sender_addr.sin_addr), ip,
                           INET_ADDRSTRLEN) == NULL) {
-                perror("inet_ntop falló al extraer la IP");
+                perror("inet_ntop fallo al extraer la IP");
                 return;
             }
 
@@ -273,7 +278,10 @@ void manejar_timer(int timerSocket, int udp_sock, int puerto_udp) {
     // Vacío el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
+    anuncio_broadcast(udp_sock, puerto_udp);
+}
 
+void anuncio_broadcast(int udp_sock, int puerto_udp) {
     char mensaje_anuncio[256];
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
              "ANNOUNCE puerto recursos\n");
@@ -287,5 +295,5 @@ void manejar_timer(int timerSocket, int udp_sock, int puerto_udp) {
     sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
            (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
-    printf("Anuncio broadcast enviado.\n");
+    printf("Anuncio broadcast enviado\n");
 }

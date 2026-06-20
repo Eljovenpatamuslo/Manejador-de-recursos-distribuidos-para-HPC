@@ -29,7 +29,6 @@ static int aceptar_listen_sock_epoll(int eventfd);
 static void rearmar_fd_epoll(int eventfd);
 
 static int aceptar_listen_sock_epoll(int eventfd) {
-    struct epoll_event ev;
     int conn_sock = accept4(eventfd, NULL, NULL, SOCK_NONBLOCK);
 
     if (conn_sock == -1) {
@@ -37,14 +36,18 @@ static int aceptar_listen_sock_epoll(int eventfd) {
             return 1;
         }
         perror("accept4");
-        exit(EXIT_FAILURE);
     }
 
-    ClienteConexion *nuevo_cliente =
-        crear_cliente(eventfd, eventfd == public_listen_sock ? CLIENTE_AGENTE_C
-                                                             : CLIENTE_ERLANG);
+    int tipo =
+        eventfd == public_listen_sock ? CLIENTE_AGENTE_C : CLIENTE_ERLANG;
+
+    ClienteConexion *nuevo_cliente = crear_cliente(conn_sock, tipo);
+
     agregar_socket_epoll(conn_sock, EPOLLIN | EPOLLONESHOT, nuevo_cliente,
-                         EPOLL_CTL_MOD);
+                         EPOLL_CTL_ADD);
+
+    printf("[%s %d] Cliente agregado\n",
+           tipo == CLIENTE_AGENTE_C ? "AGENTE C" : "ERLANG", conn_sock);
 
     return 0;
 }
@@ -64,7 +67,6 @@ int agregar_socket_epoll(int socket, int evFlags, void *evDataPtr,
         perror("agregar_socket_epoll: epoll_ctl");
         return -1;
     }
-
     return 0;
 }
 
@@ -131,9 +133,6 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    agregar_socket_epoll(public_listen_sock, EPOLLIN, NULL, EPOLL_CTL_ADD);
-    agregar_socket_epoll(local_listen_sock, EPOLLIN, NULL, EPOLL_CTL_ADD);
-    agregar_socket_epoll(udp_sock, EPOLLIN | EPOLLONESHOT, NULL, EPOLL_CTL_ADD);
     agregar_socket_epoll(timer_sock, EPOLLIN | EPOLLONESHOT, NULL,
                          EPOLL_CTL_ADD);
 
@@ -141,9 +140,18 @@ int main() {
 
     pthread_t id[nproc];
 
+    printf("Inicio del servidor. Espero dos segundos para escuchar anuncios de "
+           "otros nodos\n");
     for (int i = 0; i < nproc; i++) {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
+
+    anuncio_broadcast(udp_sock, PUERTO_UDP);
+    agregar_socket_epoll(udp_sock, EPOLLIN | EPOLLONESHOT, NULL, EPOLL_CTL_ADD);
+    sleep(2);
+    printf("Empiezo a escuchar peticiones en los listen sockets\n");
+    agregar_socket_epoll(public_listen_sock, EPOLLIN, NULL, EPOLL_CTL_ADD);
+    agregar_socket_epoll(local_listen_sock, EPOLLIN, NULL, EPOLL_CTL_ADD);
 
     pthread_join(id[0], NULL);
 
