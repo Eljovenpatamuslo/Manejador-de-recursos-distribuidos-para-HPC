@@ -11,6 +11,7 @@ struct _Solicitud {
     char ip[16];
     unsigned short puerto;
     unsigned long cant;
+    int fd;
 }; 
 typedef struct _Solicitud *Solicitud;
 
@@ -50,12 +51,14 @@ Recurso inicializar_recurso(unsigned long capacidad);
 RecursosNodo inicializar_recursos_locales();
 
 int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto);
+                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, int fd);
 
 ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec);
 
 void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reservados);
 
 RecursosReservados inicializar_recursos_reservados(TipoRecurso rec, unsigned long cant);
+
+int comp_recursos(RecursosReservados a, RecursosReservados b);
 
 #endif /* __RECURSOS_H__ */

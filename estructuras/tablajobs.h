@@ -27,6 +27,7 @@ typedef struct _DatosJob {
     char nodoIp[16];
     unsigned short nodoPuerto;
     RecursosReservados recReservados;
+    RecursosReservados recPedidos;
 } DatosJob;
 
 typedef struct _JobActivo {

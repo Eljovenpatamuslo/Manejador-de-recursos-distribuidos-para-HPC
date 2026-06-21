@@ -2,7 +2,9 @@
 #define __TABLANODOS_H__
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <pthread.h>
 #include "tablajobs.h"
@@ -70,5 +72,7 @@ void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
 DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]);
+
+char* tablanodos_obtener_nodos(TablaNodos tabla);
 
 #endif /* __TABLANODOS_H__ */
