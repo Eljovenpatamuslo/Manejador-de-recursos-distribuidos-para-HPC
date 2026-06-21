@@ -17,24 +17,57 @@ f({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
 %% caso recursivo
 f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
     
-    CantCpu = if CpuR > 0 -> rand:uniform(CpuR); true -> 0 end,
-    CantMem = if MemR > 0 -> rand:uniform(MemR); true -> 0 end,
-    CantGpu = if GpuR > 0 -> rand:uniform(GpuR); true -> 0 end,
+    CantCpu = if
+        CpuR > 0 -> rand:uniform(CpuR); 
+        true -> 0 
+    end,
+    CantMem = if 
+        MemR == 0 -> 0;
+        MemR >= 1024 -> 
+            GbMem = floor(MemR / 1024),
+            1024 * rand:uniform(GbMem); 
+        true -> 
+            MemR
+    end,
+    CantGpu = if 
+        GpuR > 0 -> rand:uniform(GpuR); 
+        true -> 0 
+    end,
     
-    case {CantCpu, CantMem, CantGpu} of
-        {0, 0, 0} -> 
-            %% Si dio {0,0,0} forzamos otro intento
-            f({Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}});
-        _ ->
+    StrCpu = if 
+        CantCpu > 0 -> "@" ++ Ip ++ ":" ++ Puerto ++ ":cpu:" ++ integer_to_list(CantCpu); 
+        true -> "" 
+    end,
 
-            StrCpu = if CantCpu > 0 -> ":cpu:" ++ integer_to_list(CantCpu); true -> "" end,
-            StrMem = if CantMem > 0 -> ":mem:" ++ integer_to_list(CantMem); true -> "" end,
-            StrGpu = if CantGpu > 0 -> ":gpu:" ++ integer_to_list(CantGpu); true -> "" end,
+    StrMem = if
+        CantMem > 0 -> 
+            Before = if
+                StrCpu == "" -> "";
+                true -> " "
+            end,
+            Before ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":mem:" ++ integer_to_list(CantMem);
             
-            NodeStr = "@" ++ Ip ++ ":" ++ Puerto ++ StrCpu ++ StrMem ++ StrGpu,
+        true -> "" 
+    end,
+    StrGpu = if 
+        CantGpu > 0 -> 
+            Before1 = if
+                StrCpu == "" -> "";
+                StrMem == "" -> "";
+                true -> " "
+            end,
+            Before1 ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":gpu:" ++ integer_to_list(CantGpu);
+        
+        true -> "" 
+    end,
     
-            Restantes = #recursos{cpu=CpuR-CantCpu, mem=MemR-CantMem, gpu=GpuR-CantGpu},
-            [NodeStr | f({Dir, Restantes})]
+    NodeStr = StrCpu ++ StrMem ++ StrGpu,
+    Restantes = #recursos{cpu=CpuR-CantCpu, mem=MemR-CantMem, gpu=GpuR-CantGpu},
+    Rest = f({Dir, Restantes}),
+    
+    if
+        Rest == [] -> [NodeStr | Rest];
+        true -> [NodeStr ++ " " | Rest]
     end.
 
 

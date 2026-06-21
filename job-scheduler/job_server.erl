@@ -73,7 +73,7 @@ acquire_loop(JobId, Recursos, Intentos) ->
             handle_failure(JobId, Recursos, Intentos);
         closed -> closed
     after ?TIMEOUT ->
-        logF:log("[Job ~p] ERROR CRÍTICO: Timeout interno del planificador.~n", [JobId]),
+        logF:log("[Job ~p] ERROR CRITICO: Timeout interno del planificador.~n", [JobId]),
         handle_failure(JobId, Recursos, Intentos)
     end.
 
