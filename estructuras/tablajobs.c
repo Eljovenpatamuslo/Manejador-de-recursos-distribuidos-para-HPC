@@ -53,8 +53,13 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
             actual->datos->recReservados->cpu += datos->recReservados->cpu;
             actual->datos->recReservados->mem += datos->recReservados->mem;
             actual->datos->recReservados->gpu += datos->recReservados->gpu;
+
+            actual->datos->recPedidos->cpu += datos->recPedidos->cpu;
+            actual->datos->recPedidos->mem += datos->recPedidos->mem;
+            actual->datos->recPedidos->gpu += datos->recPedidos->gpu;
             pthread_mutex_unlock(&tabla->mutex);
 
+            free(datos->recPedidos);
             free(datos->recReservados);
             free(datos);
             return; // No hay que agregar nuevos jobs
@@ -228,4 +233,25 @@ void tablajobs_insertar_o_actualizar(TablaJobs tabla, DatosJob *datos,
 
     // Si no existe, insertamos el job
     tablajobs_insertar(tabla, datos);
+}
+
+int job_granted(TablaJobs tabla, unsigned long jobId) {
+    int flag = 0;
+
+    unsigned idx = jobId % MAX_JOBS;
+
+    pthread_mutex_lock(&tabla->mutex);
+
+    JobActivo *actual = tabla->tablaPorId[idx];
+    while (actual != NULL) {
+        if (actual->datos->jobId == jobId) {
+            flag = comp_recursos(actual->datos->recPedidos, actual->datos->recReservados);
+            
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&tabla->mutex);
+
+    return flag;
 }

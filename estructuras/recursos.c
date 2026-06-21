@@ -28,9 +28,8 @@ RecursosNodo inicializar_recursos_locales() {
     return recursos;
 }
 
-int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
-                     unsigned long jobId, TipoRecurso rec, unsigned long cant,
-                     char ip[], unsigned short puerto) {
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
+                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, int fd) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -43,15 +42,17 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
 
     pthread_mutex_lock(&recurso->mutex);
 
+    DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
+    assert(nuevosDatos != NULL);
+        
+    nuevosDatos->jobId = jobId;
+    strncpy(nuevosDatos->nodoIp, ip, 16);
+    nuevosDatos->nodoPuerto = puerto;
+    nuevosDatos->recPedidos = inicializar_recursos_reservados(rec, cant);
+
     if (cola_es_vacia(recurso->solicitudPend) && recurso->cantDisp >= cant) {
         recurso->cantDisp -= cant;
 
-        DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
-        assert(nuevosDatos != NULL);
-
-        nuevosDatos->jobId = jobId;
-        strncpy(nuevosDatos->nodoIp, ip, 16);
-        nuevosDatos->nodoPuerto = puerto;
         nuevosDatos->recReservados = inicializar_recursos_reservados(rec, cant);
 
         tablajobs_insertar(tablaJobs, nuevosDatos);
@@ -68,8 +69,12 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
         strncpy(nuevaSolicitud->ip, ip, 16);
         nuevaSolicitud->puerto = puerto;
         nuevaSolicitud->cant = cant;
+        nuevaSolicitud->fd = fd
 
         cola_encolar(recurso->solicitudPend, nuevaSolicitud);
+
+        nuevosDatos->recReservados = inicializar_recursos_reservados(rec, 0);
+        tablajobs_insertar(tablaJobs, nuevosDatos);
 
         pthread_mutex_unlock(&recurso->mutex);
         return 0; // La reserva se agrego a la cola de espera
@@ -176,3 +181,8 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
 
     return res;
 }
+
+int comp_recursos(RecursosReservados a, RecursosReservados b) {
+    return a->cpu == b->cpu && a->mem == b->mem && a->gpu == b->gpu;
+}
+        
