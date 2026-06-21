@@ -31,6 +31,14 @@ struct _RecursosNodo {
 };
 typedef struct _RecursosNodo *RecursosNodo;
 
+struct _NodoPromovido {
+    unsigned long jobId;
+    char ip[16];
+    unsigned short puerto;
+    struct _NodoPromovido *sig;
+};
+typedef struct _NodoPromovido *ListaPromovidos;
+
 /**
  * 
  */
@@ -44,7 +52,7 @@ RecursosNodo inicializar_recursos_locales();
 int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
                      TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto);
 
-void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec);
+ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec);
 
 void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reservados);
 
