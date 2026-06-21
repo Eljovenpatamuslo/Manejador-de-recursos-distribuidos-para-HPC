@@ -1,4 +1,7 @@
 #define _GNU_SOURCE
+#include "estructuras/recursos.h"
+#include "estructuras/tablajobs.h"
+#include "estructuras/tablanodos.h"
 #include "manejadores.h"
 #include "sockets.h"
 #include "utils.h"
@@ -15,6 +18,10 @@
 #define MAX_EV_EPOLL 64
 
 #define debug(i) fprintf(stderr, "HOLA: %d\n", i);
+
+TablaNodos tablaNodos;
+TablaJobs tablaJobs;
+RecursosNodo recursos;
 
 int publicListenSocket;
 int localListenSocket;
@@ -92,7 +99,7 @@ void *gestionar_epoll(void *arg) {
 
             else if (eventFd == udpSocket) {
                 // Anuncio de otro nodo
-                registrar_nodo(udpSocket);
+                registrar_nodo(udpSocket, tablaNodos);
                 agregar_socket_epoll(eventFd, EPOLLIN | EPOLLONESHOT, NULL,
                                      EPOLL_CTL_MOD);
             }
@@ -122,6 +129,10 @@ void *gestionar_epoll(void *arg) {
 }
 
 int main() {
+    tablaNodos = tablanodos_crear(MAX_NODOS);
+    tablaJobs = tablajobs_crear();
+    recursos = inicializar_recursos_locales();
+
     publicListenSocket = crear_nonblocking_socket(PUBLIC_DIR, PUERTO_TCP);
     localListenSocket = crear_nonblocking_socket(LOCAL_DIR, PUERTO_TCP);
     udpSocket = crear_socket_udp_broadcast(PUERTO_UDP);

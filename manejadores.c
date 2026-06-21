@@ -1,4 +1,6 @@
 #include "manejadores.h"
+#include "estructuras/tablanodos.h"
+#include <string.h>
 
 ClienteConexion *crear_cliente(int clienteFD, int tipo) {
     ClienteConexion *nuevo_cliente = malloc(sizeof(ClienteConexion));
@@ -233,7 +235,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje) {
     // }
 }
 
-void registrar_nodo(int udp_sock) {
+void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
     char buffer_udp[512];
     struct sockaddr_in sender_addr;
     socklen_t sender_len = sizeof(sender_addr);
@@ -246,29 +248,23 @@ void registrar_nodo(int udp_sock) {
         buffer_udp[bytes_recibidos] = '\0';
 
         if (strncmp(buffer_udp, "ANNOUNCE", 8) == 0) {
-            // INET_ADDRSTRLEN es una constante estándar de C para el tamaño
-            // máximo de una IPv4 (16)
-            char ip[INET_ADDRSTRLEN];
-            char recursos[64];
-            int puerto;
 
-            if (inet_ntop(AF_INET, &(sender_addr.sin_addr), ip,
+            DatosNodo *datos = malloc(sizeof(DatosNodo));
+
+            if (inet_ntop(AF_INET, &(sender_addr.sin_addr), datos->ip,
                           INET_ADDRSTRLEN) == NULL) {
                 perror("inet_ntop fallo al extraer la IP");
                 return;
             }
 
-            if (sscanf(buffer_udp, "ANNOUNCE %d %63[^\n]", &puerto, recursos) ==
-                2) {
+            if (sscanf(buffer_udp, "ANNOUNCE %hu %63[^\n]", &datos->puerto,
+                       datos->recursos) == 2) {
 
-                printf("Descubierto nodo activo: IP=%s, Puerto=%d, "
+                printf("Descubierto nodo activo: IP=%s, Puerto=%hu, "
                        "Recursos=%s\n",
-                       ip, puerto, recursos);
+                       datos->ip, datos->puerto, datos->recursos);
 
-                // TODO: Aquí actualizas tu tabla de nodos en
-                // memoria, registrando la IP, el puerto y el
-                // timestamp actual con time(NULL) para luego
-                // limpiar los caídos.
+                tablanodos_insertar(tablaNodos, datos);
             }
         }
     }
@@ -284,7 +280,7 @@ void manejar_timer(int timerSocket, int udp_sock, int puerto_udp) {
 void anuncio_broadcast(int udp_sock, int puerto_udp) {
     char mensaje_anuncio[256];
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE puerto recursos\n");
+             "ANNOUNCE 12000 cpu:4 mem:4096 gpu:0\n");
 
     struct sockaddr_in dest_addr;
     memset(&dest_addr, 0, sizeof(dest_addr));
