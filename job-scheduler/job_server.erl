@@ -45,7 +45,7 @@ crear_job(Resource) ->
     job_server ! {add,JobPid,JobId}.
 
 execute_payload(JobId) ->
-    logF:log("[Job ~p] Ejecutando procesamiento en el clúster simulado...~n", [JobId]),
+    logF:log("[Job ~p] Ejecutando procesamiento en el cluster simulado...~n", [JobId]),
     timer:sleep(5 * ?SEC),
     
     logF:log("[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),

@@ -1,63 +1,76 @@
 -module(job_generator).
 -compile(export_all).
 
+-record(recursos,{cpu,mem,gpu}).
+-record(direccion,{ip,puerto}).
+% 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096;192.168.1.11:8101:cpu:2:mem:4096
 obtener_recursos_para_jobs(Nodes) ->
-    todo,
-    ["@192.168.1.2:cpu:2 @192.168.1.3:gpu:1","@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"].
-    %Dirs = maps:keys(Nodes),
-    %NodeSelected = maps:get(rand:uniform(length(Dirs)),Nodes),
-    %maps:find("",NodeSelected)
+    Nodes1 = string:lexemes(Nodes,";"),
+    ParsedNodes = job_scheduler:format_nodes(Nodes1),
+    Nod = [f(X) || X <- ParsedNodes],
+    lists:delete([],h(Nod)).
 
-
-crear_peticion(NodosDisponibles, Requisitos) ->
-    %% Iniciamos semilla para que la selección sea verdaderamente aleatoria por Job
-    rand:seed(exsp),
-    asignar_recursos(NodosDisponibles, Requisitos, []).
-
-%% Caso Base: Ya asignamos todos los requisitos
-asignar_recursos(_Nodos, [], Acumulador) ->
-    Acumulador;
-
-%% Paso Recursivo: Tomamos un requisito (ej. {cpu, 2}) y elegimos un nodo al azar
-asignar_recursos(Nodos, [{TipoRecurso, Cantidad} | RestoReqs], Acumulador) ->
-    %% Mezclamos la lista de nodos para garantizar distribución uniforme (O(N))
-    %NodosMezclados = mezclar_lista(Nodos),
+f({#direccion{ip=Ip, puerto=Puerto}, #recursos{cpu=0, mem=0, gpu=0}}) ->
+    [];
+f({#direccion{ip=Ip, puerto=Puerto}, #recursos{cpu=CpuRestante, mem=MemRestante, gpu=GpuRestante}}) ->
+    CantCpuAgarrada = 
+        case CpuRestante of 
+            0 -> 0;
+            _ -> rand:uniform(CpuRestante)
+        end,
     
-    %% Elegimos el primer nodo de la lista mezclada que tenga la capacidad suficiente
-    NodoElegido = buscar_nodo_capaz(Nodos, TipoRecurso, Cantidad),
+    ListCpuAgarrada = 
+        case CantCpuAgarrada of 
+            0 -> [];
+            _ -> "cpu:" ++ integer_to_list(CantCpuAgarrada)
+        end,
+
+    CantMemAgarrada = 
+        case MemRestante of 
+            0 -> 0;
+            _ -> rand:uniform(MemRestante)
+        end,
+
+    ListMemAgarrada = 
+        case CantMemAgarrada of 
+            0 -> [];
+            _ -> "mem:" ++ integer_to_list(CantMemAgarrada)
+        end,
+
+    CantGpuAgarrada = 
+        case GpuRestante of 
+            0 -> 0;
+            _ -> rand:uniform(GpuRestante)
+        end,
+
+    ListGpuAgarrada = 
+        case CantGpuAgarrada of 
+            0 -> [];
+            _ -> "gpu:" ++ integer_to_list(CantGpuAgarrada)
+        end,
     
-    case NodoElegido of
-        {error, no_capacity} ->
-            io:fwrite("ADVERTENCIA: No hay ningún nodo en el clúster capaz de proveer ~p de ~p.~n", 
-                      [Cantidad, TipoRecurso]),
-            %% Abortamos la creación de este Job o lo manejamos según convenga
-            exit(insufficient_cluster_capacity);
-            
-        {IpPuerto, _} ->
-            %% Construimos la tupla en el formato que espera tu job_sch.erl
-            NuevaPeticion = {IpPuerto, TipoRecurso, Cantidad},
-            asignar_recursos(Nodos, RestoReqs, [NuevaPeticion | Acumulador])
+    f({#direccion{ip = Ip, puerto = Puerto}, #recursos{cpu = CpuRestante-CantCpuAgarrada, mem = MemRestante-CantMemAgarrada, gpu = GpuRestante-CantGpuAgarrada}})
+    ++ 
+    ["@"++ Ip ++ ":" ++ ListCpuAgarrada ++ ListMemAgarrada ++ ListGpuAgarrada].
+h([]) ->
+    [];
+h(V) ->
+    {G,V1} = g(V,[]),
+    [G] ++ h(V1).
+g([],V) ->
+    {[],V};
+g([Node | Nodes],V1) ->
+    case Node of
+        [] ->
+            g(Nodes,V1);
+        _ ->
+            Recurso = lists:nth(rand:uniform(length(Node)),Node),
+            NewNode = lists:delete(Recurso,Node),
+            {N,V} = g(Nodes,[NewNode]++V1),
+            case N of
+                [] -> {Recurso,V};
+                _ -> {Recurso ++ " " ++ N,V} 
+            end
     end.
 
-%% @doc Busca linealmente un nodo que satisfaga el recurso pedido. Complejidad temporal: O(N)
-buscar_nodo_capaz([], _Tipo, _Cantidad) ->
-    {error, no_capacity};
-buscar_nodo_capaz([Nodo | Resto], Tipo, Cantidad) ->
-    {{IP, Puerto}, CpuMax, MemMax, GpuMax} = Nodo,
-    
-    Cumple = case Tipo of
-        cpu -> CpuMax >= Cantidad;
-        mem -> MemMax >= Cantidad;
-        gpu -> GpuMax >= Cantidad
-    end,
-    
-    if
-        Cumple -> { {IP, Puerto}, Nodo };
-        true -> buscar_nodo_capaz(Resto, Tipo, Cantidad)
-    end.
 
-%% @doc Implementación clásica del algoritmo de Fisher-Yates funcional para mezclar listas
-mezclar_lista(Lista) ->
-    ListaConClaves = [{rand:uniform(), Elemento} || Elemento <- Lista],
-    ListaOrdenada = lists:sort(ListaConClaves),
-    [Elemento || {_, Elemento} <- ListaOrdenada].

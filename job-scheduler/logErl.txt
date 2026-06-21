@@ -43,11 +43,11 @@ nodos: #{{direccion,"192.168.1.10","8100"} => {recursos,"4","8192","1"},
 [Job 2306] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2370] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2306] EXITO! Todos los recursos concedidos.
-[Job 2306] Ejecutando procesamiento en el clúster simulado...
+[Job 2306] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2306] Procesamiento completado. Liberando infraestructura.
 [Job 2306] Terminado correctamente.
 [Job 2370] EXITO! Todos los recursos concedidos.
-[Job 2370] Ejecutando procesamiento en el clúster simulado...
+[Job 2370] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2370] Procesamiento completado. Liberando infraestructura.
 [Job 2370] Terminado correctamente.
 ---Log del manager de erlang---
@@ -65,11 +65,11 @@ nodos: #{{direccion,"192.168.1.10","8100"} => {recursos,"4","8192","1"},
 [Job 2312] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2376] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2312] EXITO! Todos los recursos concedidos.
-[Job 2312] Ejecutando procesamiento en el clúster simulado...
+[Job 2312] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2312] Procesamiento completado. Liberando infraestructura.
 [Job 2312] Terminado correctamente.
 [Job 2376] EXITO! Todos los recursos concedidos.
-[Job 2376] Ejecutando procesamiento en el clúster simulado...
+[Job 2376] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2376] Procesamiento completado. Liberando infraestructura.
 [Job 2376] Terminado correctamente.
 nodos: #{{direccion,"192.168.1.10","8100"} => {recursos,"4","8192","1"},
@@ -77,18 +77,18 @@ nodos: #{{direccion,"192.168.1.10","8100"} => {recursos,"4","8192","1"},
 [Job 2440] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2504] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2440] ALERTA: job denegado ("@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"). Iniciando aborto...
-[Job 2440] Respetando backoff de 530 ms para mitigar contención.
+[Job 2440] Respetando backoff de 530 ms para mitigar contenciï¿½n.
 [Job 2440] Reiniciando ciclo de peticiones (Intento 1).
 [Job 2440] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2440] ALERTA: Timeout en red por recursos ("@192.168.1.2:cpu:2 @192.168.1.3:gpu:1").
-[Job 2440] Respetando backoff de 632 ms para mitigar contención.
+[Job 2440] Respetando backoff de 632 ms para mitigar contenciï¿½n.
 [Job 2440] Reiniciando ciclo de peticiones (Intento 2).
 [Job 2440] Solicitando los recursos: "@192.168.1.2:cpu:2 @192.168.1.3:gpu:1"
 [Job 2440] EXITO! Todos los recursos concedidos.
-[Job 2440] Ejecutando procesamiento en el clúster simulado...
+[Job 2440] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2440] Procesamiento completado. Liberando infraestructura.
 [Job 2440] Terminado correctamente.
 [Job 2504] EXITO! Todos los recursos concedidos.
-[Job 2504] Ejecutando procesamiento en el clúster simulado...
+[Job 2504] Ejecutando procesamiento en el clï¿½ster simulado...
 [Job 2504] Procesamiento completado. Liberando infraestructura.
 [Job 2504] Terminado correctamente.

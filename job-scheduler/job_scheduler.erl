@@ -24,25 +24,24 @@ scheduler_init() ->
     register(scheduler,ManagerPid).
 
 format_nodes([Node]) -> 
-    Map = maps:new(),
     case string:lexemes(Node,":") of
         [Ip,Puerto,"cpu",Cpu,"mem",Mem,"gpu",Gpu]->
-            Recursos = #recursos{cpu = Cpu,mem = Mem,gpu = Gpu},
+            Recursos = #recursos{cpu = list_to_integer(Cpu),mem = list_to_integer(Mem),gpu = list_to_integer(Gpu)},
             Direccion = #direccion{ip = Ip, puerto = Puerto},
-            maps:put(Direccion,Recursos,Map);
+            [{Direccion,Recursos}];
 
         [Ip,Puerto,"cpu",Cpu,"mem",Mem] ->
-            Recursos = #recursos{cpu = Cpu,mem = Mem,gpu = 0},
+            Recursos = #recursos{cpu = list_to_integer(Cpu),mem = list_to_integer(Mem),gpu = 0},
             Direccion = #direccion{ip = Ip, puerto = Puerto},
-            maps:put(Direccion,Recursos,Map);
+            [{Direccion,Recursos}];
 
         _ -> logF:log("Error: el orden de la solicitud de recursos no es compatible")
     end;
 
 format_nodes([Node | Nodes]) ->
-    Map1 = format_nodes([Node]),
-    Map2 = format_nodes(Nodes),
-    maps:merge(Map1,Map2).
+    List1 = format_nodes([Node]),
+    List2 = format_nodes(Nodes),
+    lists:append(List1,List2).
 
 obtener_y_formatear_nodos() ->
     case send_recv_manager:obtener_nodos() of
@@ -58,9 +57,9 @@ obtener_y_formatear_nodos() ->
 
 
 scheduler() ->
-    MapaNodos = obtener_y_formatear_nodos(),    
-    logF:log("nodos: ~p~n", [MapaNodos]),
-    Recursos = job_generator:obtener_recursos_para_jobs(MapaNodos),
+    ListaNodos = obtener_y_formatear_nodos(),    
+    logF:log("nodos: ~p~n", [ListaNodos]),
+    Recursos = job_generator:obtener_recursos_para_jobs(ListaNodos),
     lists:foreach(fun(Recurso) -> job_server:crear_job(Recurso) end,Recursos),
     receive
         alljobsdone -> ok
