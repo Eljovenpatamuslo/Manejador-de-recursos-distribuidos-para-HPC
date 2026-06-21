@@ -1,18 +1,21 @@
 #include "manejadores.h"
-#include "estructuras/tablanodos.h"
-#include <string.h>
+#include "estructuras/recursos.h"
+#include "estructuras/tablajobs.h"
 
-ClienteConexion *crear_cliente(int clienteFD, int tipo) {
-    ClienteConexion *nuevo_cliente = malloc(sizeof(ClienteConexion));
+ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
+    ClienteConexion *nuevoCliente = malloc(sizeof(ClienteConexion));
 
-    nuevo_cliente->fd = clienteFD;
+    nuevoCliente->fd = clienteFD;
 
-    nuevo_cliente->tipo = tipo;
+    nuevoCliente->tipo = tipo;
 
-    return nuevo_cliente;
+    strncpy(nuevoCliente->ip, ip, INET_ADDRSTRLEN);
+
+    return nuevoCliente;
 }
 
-int leer_y_procesar_cliente(ClienteConexion *cliente) {
+int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
+                            TablaJobs tablaJobs) {
     int espacio_libre = sizeof(cliente->buffer) - cliente->bytes_in_buffer - 1;
 
     int bytes_leidos = read(
@@ -43,7 +46,7 @@ int leer_y_procesar_cliente(ClienteConexion *cliente) {
         int longitud_mensaje = newline_ptr - cliente->buffer;
 
         if (cliente->tipo == CLIENTE_AGENTE_C) {
-            manejar_agente_c(cliente, cliente->buffer);
+            manejar_agente_c(cliente, cliente->buffer, recNodo, tablaJobs);
         } else {
             manejar_cliente_erlang(cliente, cliente->buffer);
         }
@@ -63,11 +66,22 @@ int leer_y_procesar_cliente(ClienteConexion *cliente) {
     return 0;
 }
 
-void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
+int tipo_recurso_desde_string(char *s) {
+    if (strcmp("cpu", s) == 0)
+        return 0;
+    if (strcmp("mem", s) == 0)
+        return 1;
+    if (strcmp("gpu", s) == 0)
+        return 2;
+    return -1;
+}
+
+void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
+                      RecursosNodo recNodo, TablaJobs tablaJobs) {
     char comando[16];
-    int job_id;
+    unsigned long jobId;
     char recurso[16];
-    int cantidad;
+    unsigned long cant;
 
     if (sscanf(mensaje, "%15s", comando) != 1) {
         fprintf(stderr, "[AGENTE C %d] Linea vacia o mal formada\n",
@@ -77,11 +91,15 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje) {
 
     if (strcmp(comando, "RESERVE") == 0) {
 
-        if (sscanf(mensaje, "RESERVE %d %15s %d", &job_id, recurso,
-                   &cantidad) == 3) {
-            printf("[AGENTE C %d] Solicita RESERVE: Job=%d, Recurso=%s, "
-                   "Cantidad=%d\n",
-                   cliente->fd, job_id, recurso, cantidad);
+        if (sscanf(mensaje, "RESERVE %lu %15s %lu", &jobId, recurso, &cant) ==
+            3) {
+            printf("[AGENTE C %d] Solicita RESERVE: Job=%lu, Recurso=%s, "
+                   "Cantidad=%lu\n",
+                   cliente->fd, jobId, recurso, cant);
+
+            reservar_recurso(
+                recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso),
+                cant, cliente->ip, buscar_puerto(tablaNodos, cliente->ip));
 
             // TODO Lógica:
             // - Buscar el recurso en tus variables locales.

@@ -21,7 +21,7 @@
 
 TablaNodos tablaNodos;
 TablaJobs tablaJobs;
-RecursosNodo recursos;
+RecursosNodo recNodo;
 
 int publicListenSocket;
 int localListenSocket;
@@ -36,25 +36,37 @@ static int aceptar_listen_sock_epoll(int eventFd);
 static void rearmar_fd_epoll(int eventFd);
 
 static int aceptar_listen_sock_epoll(int eventFd) {
-    int connSocket = accept4(eventFd, NULL, NULL, SOCK_NONBLOCK);
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+
+    int connSocket = accept4(eventFd, (struct sockaddr *)&client_addr,
+                             &client_len, SOCK_NONBLOCK);
 
     if (connSocket == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return 1;
         }
         perror("accept4");
+        return -1;
+    }
+
+    char ip[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &client_addr.sin_addr, ip, INET_ADDRSTRLEN) ==
+        NULL) {
+        perror("inet_ntop falló al extraer IP del cliente");
+        strcpy(ip, "Desconocida");
     }
 
     int tipo =
         eventFd == publicListenSocket ? CLIENTE_AGENTE_C : CLIENTE_ERLANG;
 
-    ClienteConexion *nuevo_cliente = crear_cliente(connSocket, tipo);
+    ClienteConexion *nuevo_cliente = crear_cliente(connSocket, tipo, ip);
 
     agregar_socket_epoll(connSocket, EPOLLIN | EPOLLONESHOT, nuevo_cliente,
                          EPOLL_CTL_ADD);
 
-    printf("[%s %d] Cliente agregado\n",
-           tipo == CLIENTE_AGENTE_C ? "AGENTE C" : "ERLANG", connSocket);
+    printf("[%s %d] Cliente agregado desde IP: %s\n",
+           tipo == CLIENTE_AGENTE_C ? "AGENTE C" : "ERLANG", connSocket, ip);
 
     return 0;
 }
@@ -114,7 +126,8 @@ void *gestionar_epoll(void *arg) {
                 ClienteConexion *cliente =
                     (ClienteConexion *)events[n].data.ptr;
 
-                int sockClosed = leer_y_procesar_cliente(cliente);
+                int sockClosed =
+                    leer_y_procesar_cliente(cliente, recNodo, tablaJobs);
 
                 if (sockClosed) {
                     close(cliente->fd);
@@ -131,7 +144,7 @@ void *gestionar_epoll(void *arg) {
 int main() {
     tablaNodos = tablanodos_crear(MAX_NODOS);
     tablaJobs = tablajobs_crear();
-    recursos = inicializar_recursos_locales();
+    recNodo = inicializar_recursos_locales();
 
     publicListenSocket = crear_nonblocking_socket(PUBLIC_DIR, PUERTO_TCP);
     localListenSocket = crear_nonblocking_socket(LOCAL_DIR, PUERTO_TCP);

@@ -1,3 +1,4 @@
+#include "estructuras/tablajobs.h"
 #include "estructuras/tablanodos.h"
 #include <arpa/inet.h>
 #include <errno.h>
@@ -15,11 +16,14 @@ typedef struct {
     TipoCliente tipo;
     char buffer[4096];
     int bytes_in_buffer;
+    char ip[16];
 } ClienteConexion;
 
-ClienteConexion *crear_cliente(int eventfd, int tipo);
-int leer_y_procesar_cliente(ClienteConexion *cliente);
-void manejar_agente_c(ClienteConexion *cliente, const char *mensaje);
+ClienteConexion *crear_cliente(int eventfd, int tipo, char ip[]);
+int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
+                            TablaJobs tablaJobs);
+void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
+                      RecursosNodo recNodo, TablaJobs tablaJobs);
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje);
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp);
 void registrar_nodo(int udp_sock, TablaNodos tablaNodos);

@@ -28,8 +28,9 @@ RecursosNodo inicializar_recursos_locales() {
     return recursos;
 }
 
-int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto) {
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                     unsigned long jobId, TipoRecurso rec, unsigned long cant,
+                     char ip[], unsigned short puerto) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -47,7 +48,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
         DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
         assert(nuevosDatos != NULL);
-        
+
         nuevosDatos->jobId = jobId;
         strncpy(nuevosDatos->nodoIp, ip, 16);
         nuevosDatos->nodoPuerto = puerto;
@@ -60,7 +61,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
     } else {
         Solicitud nuevaSolicitud = malloc(sizeof(struct _Solicitud));
         assert(nuevaSolicitud != NULL);
-        
+
         nuevaSolicitud->jobId = jobId;
         strncpy(nuevaSolicitud->ip, ip, 16);
         nuevaSolicitud->puerto = puerto;
@@ -74,14 +75,19 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
     return -1; // La reserva supera la capacidad máxima del recurso
 }
 
-void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec) {
+void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                     unsigned long jobId, TipoRecurso rec) {
     Recurso recurso;
 
-    if (rec == CPU) recurso = nodo->cpu;
-    else if (rec == MEM) recurso = nodo->mem;
-    else recurso = nodo->gpu;
+    if (rec == CPU)
+        recurso = nodo->cpu;
+    else if (rec == MEM)
+        recurso = nodo->mem;
+    else
+        recurso = nodo->gpu;
 
-    unsigned long cantALiberar = tablajobs_restar_recurso(tablaJobs, jobId, rec);
+    unsigned long cantALiberar =
+        tablajobs_restar_recurso(tablaJobs, jobId, rec);
     if (cantALiberar == 0) {
         return; // El job no tenía este recurso asignado
     }
@@ -91,7 +97,7 @@ void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
     while (!cola_es_vacia(recurso->solicitudPend)) {
         Solicitud solPendiente = (Solicitud)cola_inicio(recurso->solicitudPend);
-        
+
         if (recurso->cantDisp >= solPendiente->cant) {
             // Hay suficientes recursos para la primera solicitud
             cola_desencolar(recurso->solicitudPend);
@@ -103,7 +109,7 @@ void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
             char solIp[16];
             strncpy(solIp, solPendiente->ip, 16);
             unsigned short solPuerto = solPendiente->puerto;
-            
+
             free(solPendiente);
 
             // Liberamos el mutex del recurso antes de interactuar con la tabla
@@ -115,21 +121,24 @@ void liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
             strncpy(nuevosDatos->nodoIp, solIp, 16);
             nuevosDatos->nodoPuerto = solPuerto;
 
-            nuevosDatos->recReservados = inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recReservados =
+                inicializar_recursos_reservados(rec, solCant);
 
             // Insertamos o actualizamos en la tabla general
-            tablajobs_insertar_o_actualizar(tablaJobs, nuevosDatos, rec, solCant);
+            tablajobs_insertar_o_actualizar(tablaJobs, nuevosDatos, rec,
+                                            solCant);
 
             pthread_mutex_lock(&recurso->mutex);
         } else {
-            break; 
+            break;
         }
     }
 
     pthread_mutex_unlock(&recurso->mutex);
 }
 
-void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reservados) {
+void liberar_recursos_reservados(RecursosNodo recursos,
+                                 RecursosReservados reservados) {
     pthread_mutex_lock(&recursos->cpu->mutex);
     recursos->cpu->cantDisp += reservados->cpu;
     pthread_mutex_unlock(&recursos->cpu->mutex);
@@ -143,7 +152,8 @@ void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reser
     pthread_mutex_unlock(&recursos->gpu->mutex);
 }
 
-RecursosReservados inicializar_recursos_reservados(TipoRecurso rec, unsigned long cant) {
+RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
+                                                   unsigned long cant) {
     RecursosReservados res = malloc(sizeof(struct _RecursosReservados));
     res->cpu = rec == CPU ? cant : 0;
     res->mem = rec == MEM ? cant : 0;
@@ -152,5 +162,3 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec, unsigned lon
     return res;
 }
 
-
-        
