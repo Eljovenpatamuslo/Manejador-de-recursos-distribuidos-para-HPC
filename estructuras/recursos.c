@@ -140,7 +140,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             nuevoNodo->puerto = solPuerto;
 
             // Lo insertamos al principio de nuestra lista de promovidos
-            nuevoNodo->sig = promovidosHead;
+            nuevoNodo->sig = promovidosPrimero;
             promovidosPrimero = nuevoNodo;
         } else {
             break;

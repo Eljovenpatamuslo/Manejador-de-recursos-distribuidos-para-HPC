@@ -126,8 +126,8 @@ void *gestionar_epoll(void *arg) {
                 ClienteConexion *cliente =
                     (ClienteConexion *)events[n].data.ptr;
 
-                int sockClosed =
-                    leer_y_procesar_cliente(cliente, recNodo, tablaJobs);
+                int sockClosed = leer_y_procesar_cliente(cliente, recNodo,
+                                                         tablaJobs, tablaNodos);
 
                 if (sockClosed) {
                     close(cliente->fd);

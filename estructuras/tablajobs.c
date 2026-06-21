@@ -39,7 +39,7 @@ void tablajobs_destruir(TablaJobs tabla) {
 }
 
 void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
-    unsigned hashDatos = hash_ip(datos->nodoIp, datos->nodoPuerto);
+    unsigned hashDatos = hash_ip(datos->nodoIp);
 
     pthread_mutex_lock(&tabla->mutex);
 
@@ -95,7 +95,7 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
 
 void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
                                unsigned short puerto, RecursosNodo recursos) {
-    unsigned idx = hash_ip(ip, puerto) % MAX_NODOS;
+    unsigned idx = hash_ip(ip) % MAX_NODOS;
     JobActivo *jobsABorrar = NULL;
 
     pthread_mutex_lock(&tabla->mutex);

@@ -21,9 +21,9 @@ typedef struct {
 
 ClienteConexion *crear_cliente(int eventfd, int tipo, char ip[]);
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
-                            TablaJobs tablaJobs);
+                            TablaJobs tablaJobs, TablaNodos tablaNodos);
 void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
-                      RecursosNodo recNodo, TablaJobs tablaJobs);
+                      RecursosNodo recNodo, TablaJobs tablaJobs, TablaNodos);
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje);
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp);
 void registrar_nodo(int udp_sock, TablaNodos tablaNodos);

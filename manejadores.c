@@ -1,6 +1,7 @@
 #include "manejadores.h"
 #include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
+#include "estructuras/tablanodos.h"
 
 ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
     ClienteConexion *nuevoCliente = malloc(sizeof(ClienteConexion));
@@ -15,7 +16,7 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
 }
 
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
-                            TablaJobs tablaJobs) {
+                            TablaJobs tablaJobs, TablaNodos tablaNodos) {
     int espacio_libre = sizeof(cliente->buffer) - cliente->bytes_in_buffer - 1;
 
     int bytes_leidos = read(
@@ -46,9 +47,10 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
         int longitud_mensaje = newline_ptr - cliente->buffer;
 
         if (cliente->tipo == CLIENTE_AGENTE_C) {
-            manejar_agente_c(cliente, cliente->buffer, recNodo, tablaJobs);
+            manejar_agente_c(cliente, cliente->buffer, recNodo, tablaJobs,
+                             tablaNodos);
         } else {
-            manejar_cliente_erlang(cliente, cliente->buffer);
+            manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs);
         }
 
         int bytes_sobrantes = cliente->bytes_in_buffer - (longitud_mensaje + 1);
@@ -76,8 +78,11 @@ int tipo_recurso_desde_string(char *s) {
     return -1;
 }
 
+void enviar_granted_promovidos(ListaPromovidos lista) {}
+
 void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
-                      RecursosNodo recNodo, TablaJobs tablaJobs) {
+                      RecursosNodo recNodo, TablaJobs tablaJobs,
+                      TablaNodos tablaNodos) {
     char comando[16];
     unsigned long jobId;
     char recurso[16];
@@ -97,24 +102,46 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                    "Cantidad=%lu\n",
                    cliente->fd, jobId, recurso, cant);
 
-            reservar_recurso(
-                recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                cant, cliente->ip, buscar_puerto(tablaNodos, cliente->ip));
+            DatosNodo datos = tablanodos_buscar(tablaNodos, cliente->ip);
 
-            // TODO Lógica:
-            // - Buscar el recurso en tus variables locales.
-            // - Si hay disponible:
-            //      restar cantidad, guardar en tu tabla de jobs activos,
-            //      hacer send(cliente->fd, "GRANTED <job_id>\n", ...).
-            // - Si NO hay disponible:
-            //      agregar job_id y cliente->fd a la cola FIFO del recurso.
+            int estadoSolicitud = reservar_recurso(
+                recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso),
+                cant, cliente->ip, datos.puerto);
+
+            if (estadoSolicitud == 1) {
+                printf("[AGENTE C % d] El recurso se reservo correctamente\n",
+                       cliente->fd);
+
+                char respuesta_granted[64];
+                int longitud =
+                    snprintf(respuesta_granted, sizeof(respuesta_granted),
+                             "GRANTED %lu\n", jobId);
+
+                int bytes_enviados =
+                    send(cliente->fd, respuesta_granted, longitud, 0);
+
+                if (bytes_enviados == -1) {
+                    perror("send GRANTED fallo");
+                }
+            }
+
+            if (estadoSolicitud == 0) {
+                printf(
+                    "[AGENTE C % d] La reserva se agregó a la cola de espera\n",
+                    cliente->fd);
+            }
+
+            if (estadoSolicitud == -1) {
+                printf("[AGENTE C % d] No se pudo realizar la reserva\n",
+                       cliente->fd);
+            }
         }
 
     } else if (strcmp(comando, "GRANTED") == 0) {
 
-        if (sscanf(mensaje, "GRANTED %d", &job_id) == 1) {
-            printf("[AGENTE C %d] Concedio GRANTED: Job=%d\n", cliente->fd,
-                   job_id);
+        if (sscanf(mensaje, "GRANTED %lu", &jobId) == 1) {
+            printf("[AGENTE C %d] Concedio GRANTED: Job=%lu\n", cliente->fd,
+                   jobId);
 
             // TODO Lógica:
             // - Tú pediste un recurso y te lo dieron.
@@ -124,9 +151,9 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
     } else if (strcmp(comando, "DENIED") == 0) {
 
-        if (sscanf(mensaje, "DENIED %d", &job_id) == 1) {
-            printf("[AGENTE C %d] Denego DENIED: Job=%d\n", cliente->fd,
-                   job_id);
+        if (sscanf(mensaje, "DENIED %lu", &jobId) == 1) {
+            printf("[AGENTE C %d] Denego DENIED: Job=%lu\n", cliente->fd,
+                   jobId);
 
             // TODO Lógica:
             // - Tu petición fue rechazada. Avisar a Erlang.
@@ -134,11 +161,14 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
     } else if (strcmp(comando, "RELEASE") == 0) {
 
-        if (sscanf(mensaje, "RELEASE %d %15s %d", &job_id, recurso,
-                   &cantidad) == 3) {
-            printf("[AGENTE C %d] Notifica RELEASE: Job=%d, Recurso=%s, "
-                   "Cantidad=%d\n",
-                   cliente->fd, job_id, recurso, cantidad);
+        if (sscanf(mensaje, "RELEASE %lu %15s %lu", &jobId, recurso, &cant) ==
+            3) {
+            printf("[AGENTE C %d] Notifica RELEASE: Job=%lu, Recurso=%s, "
+                   "Cantidad=%lu\n",
+                   cliente->fd, jobId, recurso, cant);
+
+            ListaPromovidos lista = liberar_recurso(
+                recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso));
 
             // TODO Lógica:
             // - Sumar la cantidad devuelta a tu recurso local.
@@ -153,7 +183,8 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
     }
 }
 
-void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje) {
+void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
+                            TablaJobs tablaJobs) {
 
     if (strncmp(mensaje, "JOB_REQUEST", 11) == 0) {
         int job_id;

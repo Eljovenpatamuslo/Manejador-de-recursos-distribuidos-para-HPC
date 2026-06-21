@@ -189,7 +189,7 @@ int comp_nodos(const DatosNodo *a, const DatosNodo *b) {
 
 DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]) {
     unsigned ipHash = hash_ip(ip);
-    DatosNodo dato = NULL;
+    DatosNodo dato;
 
     pthread_mutex_lock(&tabla->mutex);
 
@@ -197,8 +197,8 @@ DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]) {
 
     NodoActivo *actual = tabla->nodos[idx];
     while (actual != NULL) {
-        if (strcmp(actual->ip, ip) == 0) {
-            dato = actual->datos;
+        if (strcmp(actual->datos->ip, ip) == 0) {
+            dato = *actual->datos;
             break;
         }
     }
