@@ -27,6 +27,7 @@ struct _RecursosNodo {
     Recurso cpu;
     Recurso mem;
     Recurso gpu;
+    pthread_mutex_t mutex;
 };
 typedef struct _RecursosNodo *RecursosNodo;
 

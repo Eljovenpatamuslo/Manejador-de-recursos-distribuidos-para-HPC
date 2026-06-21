@@ -69,4 +69,6 @@ void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 
 int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
+DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]);
+
 #endif /* __TABLANODOS_H__ */

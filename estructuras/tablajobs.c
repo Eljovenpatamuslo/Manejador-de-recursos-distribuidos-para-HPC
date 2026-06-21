@@ -39,7 +39,7 @@ void tablajobs_destruir(TablaJobs tabla) {
 }
 
 void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
-    unsigned hashDatos = hash_ip_puerto(datos->nodoIp, datos->nodoPuerto);
+    unsigned hashDatos = hash_ip(datos->nodoIp, datos->nodoPuerto);
 
     pthread_mutex_lock(&tabla->mutex);
 
@@ -94,7 +94,7 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
 }
 
 void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto, RecursosNodo recursos) {
-    unsigned idx = hash_ip_puerto(ip, puerto) % MAX_NODOS;
+    unsigned idx = hash_ip(ip, puerto) % MAX_NODOS;
     JobActivo *jobsABorrar = NULL; 
 
     pthread_mutex_lock(&tabla->mutex);
@@ -117,7 +117,7 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto
     
     while (jobsABorrar != NULL) {
         JobActivo *sig = jobsABorrar->sigJobId;
-        liberar_recursos(recursos, jobsABorrar->datos->recReservados);
+        liberar_recursos_reservados(recursos, jobsABorrar->datos->recReservados);
         free(jobsABorrar->datos->recReservados);
         free(jobsABorrar->datos);
         free(jobsABorrar);
@@ -140,7 +140,7 @@ void desconectar_job(TablaJobs tabla, JobActivo* job) {
 
     // Reajustamos los punteros de colisión de la tabla de jobs por nodo
     if (job->antJobNodo == NULL) {
-        unsigned nidx = hash_ip_puerto(job->datos->nodoIp, job->datos->nodoPuerto) % MAX_NODOS;
+        unsigned nidx = hash_ip(job->datos->nodoIp) % MAX_NODOS;
         tabla->tablaPorNodo[nidx] = job->sigJobNodo;
     } else {
         job->antJobNodo->sigJobNodo = job->sigJobNodo;

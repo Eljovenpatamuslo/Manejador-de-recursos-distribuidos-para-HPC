@@ -38,7 +38,7 @@ void tablanodos_destruir(TablaNodos tabla) {
 }
 
 void tablanodos_insertar(TablaNodos tabla, DatosNodo *datos) {
-    unsigned hashDatos = hash_ip_puerto(datos->ip, datos->puerto);
+    unsigned hashDatos = hash_ip(datos->ip);
 
     pthread_mutex_lock(&tabla->mutex);
 
@@ -134,7 +134,7 @@ void tablanodos_redimensionar(TablaNodos tabla){
     // Recorremos la tabla como lista
     NodoActivo *actual = tabla->primerNodo;
     while (actual != NULL) {
-        unsigned nuevoIdx = hash_ip_puerto(actual->datos->ip, actual->datos->puerto) % nuevaCapacidad;
+        unsigned nuevoIdx = hash_ip(actual->datos->ip) % nuevaCapacidad;
 
         actual->antHash = NULL;
         actual->sigHash = nuevosNodos[nuevoIdx];
@@ -168,7 +168,7 @@ void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo) {
 
     // Reajustamos los punteros de colisión del hash
     if (nodo->antHash == NULL) {
-        unsigned idx = hash_ip_puerto(nodo->datos->ip, nodo->datos->puerto) % tabla->capacidad;
+        unsigned idx = hash_ip(nodo->datos->ip) % tabla->capacidad;
         tabla->nodos[idx] = nodo->sigHash;
     } else {
         nodo->antHash->sigHash = nodo->sigHash;
@@ -182,9 +182,25 @@ void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo) {
 }
 
 int comp_nodos(const DatosNodo *a, const DatosNodo *b) {
-    if (a->puerto != b->puerto) {
-        return (a->puerto < b->puerto) ? -1 : 1;
-    }
-    
     return strcmp(a->ip, b->ip);
+}
+
+DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]) {
+    unsigned ipHash = hash_ip(ip);
+    DatosNodo dato = NULL;
+
+    pthread_mutex_lock(&tabla->mutex);
+    
+    unsigned idx = ipHash % tabla->capacidad;
+    
+    NodoActivo *actual = tabla->nodos[idx];
+    while (actual != NULL) {
+        if (strcmp(actual->ip, ip) == 0) {
+            dato = actual->datos;
+            break;
+        }   
+    }
+    pthread_mutex_unlock(&tabla->mutex);
+
+    return dato;
 }

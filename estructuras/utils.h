@@ -9,9 +9,9 @@
 #include <string.h>
 
 /**
- * Devuelve el hash asociado a la ip y puerto dados.
+ * Devuelve el hash asociado a la ip dado.
  */
-unsigned int hash_ip_puerto(const char *ip, unsigned short puerto);
+unsigned int hash_ip(const char *ip);
 
 /**
  * Retorna la cantidad de cpus que tiene la computadora.
