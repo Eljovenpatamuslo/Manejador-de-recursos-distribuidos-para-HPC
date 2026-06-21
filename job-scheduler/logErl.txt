@@ -92,3 +92,25 @@ nodos: #{{direccion,"192.168.1.10","8100"} => {recursos,"4","8192","1"},
 [Job 2504] Ejecutando procesamiento en el cl�ster simulado...
 [Job 2504] Procesamiento completado. Liberando infraestructura.
 [Job 2504] Terminado correctamente.
+---Log del scheduler de erlang---
+Erlang se conecto al nodo local
+nodos: [{{direccion,"127.0.0.1","9000"},{recursos,2,2048,1}},
+        {{direccion,"127.0.0.1","9001"},{recursos,4,4096,0}}]
+[Job 34] Solicitando los recursos: "@127.0.0.1:9000:mem:460 @127.0.0.1:9001:mem:3"
+[Job 66] Solicitando los recursos: "@127.0.0.1:9000:mem:6 @127.0.0.1:9001:cpu:3:mem:4044"
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:2:mem:920:gpu:1 @127.0.0.1:9001:mem:1"
+[Job 130] Solicitando los recursos: "@127.0.0.1:9000:mem:166 @127.0.0.1:9001:mem:3"
+[Job 162] Solicitando los recursos: "@127.0.0.1:9000:mem:1 @127.0.0.1:9001:mem:1"
+[Job 194] Solicitando los recursos: "@127.0.0.1:9000:mem:366 @127.0.0.1:9001:mem:6"
+[Job 226] Solicitando los recursos: "@127.0.0.1:9000:mem:8 @127.0.0.1:9001:mem:7"
+[Job 258] Solicitando los recursos: "@127.0.0.1:9000:mem:1 @127.0.0.1:9001:cpu:1:mem:30"
+[Job 290] Solicitando los recursos: "@127.0.0.1:9000:mem:109 @127.0.0.1:9001:mem:1"
+[Job 322] Solicitando los recursos: "@127.0.0.1:9000:mem:11"
+[Job 34] EXITO! Todos los recursos concedidos.
+[Job 34] Ejecutando procesamiento en el cluster simulado...
+[Job 66] EXITO! Todos los recursos concedidos.
+[Job 66] Ejecutando procesamiento en el cluster simulado...
+[Job 34] Procesamiento completado. Liberando infraestructura.
+[Job 34] Terminado correctamente.
+[Job 66] Procesamiento completado. Liberando infraestructura.
+[Job 66] Terminado correctamente.

@@ -3,74 +3,69 @@
 
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
-% 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096;192.168.1.11:8101:cpu:2:mem:4096
-obtener_recursos_para_jobs(Nodes) ->
-    Nodes1 = string:lexemes(Nodes,";"),
-    ParsedNodes = job_scheduler:format_nodes(Nodes1),
+
+%% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
+obtener_recursos_para_jobs(ParsedNodes) ->
     Nod = [f(X) || X <- ParsedNodes],
-    lists:delete([],h(Nod)).
+    %%filtramos listas vacías
+    lists:filter(fun(E) -> E /= [] end, h(Nod)).
 
-f({#direccion{ip=Ip, puerto=Puerto}, #recursos{cpu=0, mem=0, gpu=0}}) ->
+%% caso base
+f({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
     [];
-f({#direccion{ip=Ip, puerto=Puerto}, #recursos{cpu=CpuRestante, mem=MemRestante, gpu=GpuRestante}}) ->
-    CantCpuAgarrada = 
-        case CpuRestante of 
-            0 -> 0;
-            _ -> rand:uniform(CpuRestante)
-        end,
+
+%% caso recursivo
+f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
     
-    ListCpuAgarrada = 
-        case CantCpuAgarrada of 
-            0 -> [];
-            _ -> "cpu:" ++ integer_to_list(CantCpuAgarrada)
-        end,
-
-    CantMemAgarrada = 
-        case MemRestante of 
-            0 -> 0;
-            _ -> rand:uniform(MemRestante)
-        end,
-
-    ListMemAgarrada = 
-        case CantMemAgarrada of 
-            0 -> [];
-            _ -> "mem:" ++ integer_to_list(CantMemAgarrada)
-        end,
-
-    CantGpuAgarrada = 
-        case GpuRestante of 
-            0 -> 0;
-            _ -> rand:uniform(GpuRestante)
-        end,
-
-    ListGpuAgarrada = 
-        case CantGpuAgarrada of 
-            0 -> [];
-            _ -> "gpu:" ++ integer_to_list(CantGpuAgarrada)
-        end,
+    CantCpu = if CpuR > 0 -> rand:uniform(CpuR); true -> 0 end,
+    CantMem = if MemR > 0 -> rand:uniform(MemR); true -> 0 end,
+    CantGpu = if GpuR > 0 -> rand:uniform(GpuR); true -> 0 end,
     
-    f({#direccion{ip = Ip, puerto = Puerto}, #recursos{cpu = CpuRestante-CantCpuAgarrada, mem = MemRestante-CantMemAgarrada, gpu = GpuRestante-CantGpuAgarrada}})
-    ++ 
-    ["@"++ Ip ++ ":" ++ ListCpuAgarrada ++ ListMemAgarrada ++ ListGpuAgarrada].
-h([]) ->
-    [];
-h(V) ->
-    {G,V1} = g(V,[]),
-    [G] ++ h(V1).
-g([],V) ->
-    {[],V};
-g([Node | Nodes],V1) ->
-    case Node of
-        [] ->
-            g(Nodes,V1);
+    case {CantCpu, CantMem, CantGpu} of
+        {0, 0, 0} -> 
+            %% Si dio {0,0,0} forzamos otro intento
+            f({Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}});
         _ ->
-            Recurso = lists:nth(rand:uniform(length(Node)),Node),
-            NewNode = lists:delete(Recurso,Node),
-            {N,V} = g(Nodes,[NewNode]++V1),
-            case N of
-                [] -> {Recurso,V};
-                _ -> {Recurso ++ " " ++ N,V} 
-            end
+
+            StrCpu = if CantCpu > 0 -> ":cpu:" ++ integer_to_list(CantCpu); true -> "" end,
+            StrMem = if CantMem > 0 -> ":mem:" ++ integer_to_list(CantMem); true -> "" end,
+            StrGpu = if CantGpu > 0 -> ":gpu:" ++ integer_to_list(CantGpu); true -> "" end,
+            
+            NodeStr = "@" ++ Ip ++ ":" ++ Puerto ++ StrCpu ++ StrMem ++ StrGpu,
+    
+            Restantes = #recursos{cpu=CpuR-CantCpu, mem=MemR-CantMem, gpu=GpuR-CantGpu},
+            [NodeStr | f({Dir, Restantes})]
     end.
 
 
+h([]) ->
+    [];
+h(V) ->
+    {G, V1} = g(V, []),
+    case G of
+        [] -> h(V1);
+        _  -> [G | h(V1)]
+    end.
+
+g([], V) ->
+    {[], V};
+g([Node | Nodes], V1) ->
+    case Node of
+        [] ->
+            g(Nodes, V1);
+        _ ->
+            Recurso = lists:nth(rand:uniform(length(Node)), Node),
+            NewNode = lists:delete(Recurso, Node),
+            
+            {N, V} = g(Nodes, [NewNode | V1]),
+            
+            case N of
+                %%parseamos y ordenamos los strings
+                [] -> {Recurso, V};
+                _  -> 
+                    TokensIdénticos = string:lexemes(Recurso ++ " " ++ N, " "),
+                    TokensOrdenados = lists:sort(TokensIdénticos),
+                    StringSeguro = string:join(TokensOrdenados, " "),
+                    {StringSeguro, V} 
+            end
+    end.
