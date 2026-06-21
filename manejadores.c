@@ -16,7 +16,8 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
 }
 
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
-                            TablaJobs tablaJobs, TablaNodos tablaNodos) {
+                            TablaJobs tablaJobs, TablaNodos tablaNodos,
+                            int erlangSchedulerSocket) {
     int espacio_libre = sizeof(cliente->buffer) - cliente->bytes_in_buffer - 1;
 
     int bytes_leidos = read(
@@ -48,9 +49,10 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
 
         if (cliente->tipo == CLIENTE_AGENTE_C) {
             manejar_agente_c(cliente, cliente->buffer, recNodo, tablaJobs,
-                             tablaNodos);
+                             tablaNodos, erlangSchedulerSocket);
         } else {
-            manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs);
+            manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs,
+                                   tablaNodos);
         }
 
         int bytes_sobrantes = cliente->bytes_in_buffer - (longitud_mensaje + 1);
@@ -78,11 +80,48 @@ int tipo_recurso_desde_string(char *s) {
     return -1;
 }
 
-void enviar_granted_promovidos(ListaPromovidos lista) {}
+int enviar_formateado(int fd, const char *formato, ...) {
+    char buffer[MAX_MSG_LEN];
+
+    va_list args;
+    va_start(args, formato);
+
+    int longitud = vsnprintf(buffer, sizeof(buffer), formato, args);
+    va_end(args);
+
+    if (longitud < 0 || longitud >= MAX_MSG_LEN) {
+        fprintf(stderr, "[ERROR] Mensaje demasiado largo o error de formato\n");
+        return -1;
+    }
+
+    int bytes_enviados = send(fd, buffer, longitud, 0);
+    if (bytes_enviados == -1) {
+        perror("Error en send formateado");
+        return -1;
+    }
+
+    return 0;
+}
+
+void notificar_lista_promovidos(ListaPromovidos lista) {
+    struct _NodoPromovido *actual = lista;
+
+    while (actual != NULL) {
+        printf("[PROMOVIDOS] Notificando a FD %d (Job %lu)\n", actual->fd,
+               actual->jobId);
+
+        if (enviar_formateado(actual->fd, "GRANTED %lu\n", actual->jobId) ==
+            0) {
+            printf("[PROMOVIDOS] Notificación exitosa\n");
+        }
+
+        actual = actual->sig;
+    }
+}
 
 void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                       RecursosNodo recNodo, TablaJobs tablaJobs,
-                      TablaNodos tablaNodos) {
+                      TablaNodos tablaNodos, int erlangSchedulerSocket) {
     char comando[16];
     unsigned long jobId;
     char recurso[16];
@@ -106,23 +145,12 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
             int estadoSolicitud = reservar_recurso(
                 recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                cant, cliente->ip, datos.puerto);
+                cant, cliente->ip, datos.puerto, cliente->fd);
 
             if (estadoSolicitud == 1) {
-                printf("[AGENTE C % d] El recurso se reservo correctamente\n",
+                printf("[AGENTE C %d] El recurso se reservo correctamente\n",
                        cliente->fd);
-
-                char respuesta_granted[64];
-                int longitud =
-                    snprintf(respuesta_granted, sizeof(respuesta_granted),
-                             "GRANTED %lu\n", jobId);
-
-                int bytes_enviados =
-                    send(cliente->fd, respuesta_granted, longitud, 0);
-
-                if (bytes_enviados == -1) {
-                    perror("send GRANTED fallo");
-                }
+                enviar_formateado(cliente->fd, "GRANTED %lu\n", jobId);
             }
 
             if (estadoSolicitud == 0) {
@@ -134,6 +162,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             if (estadoSolicitud == -1) {
                 printf("[AGENTE C % d] No se pudo realizar la reserva\n",
                        cliente->fd);
+                enviar_formateado(cliente->fd, "DENIED %lu\n", jobId);
             }
         }
 
@@ -143,10 +172,10 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Concedio GRANTED: Job=%lu\n", cliente->fd,
                    jobId);
 
-            // TODO Lógica:
-            // - Tú pediste un recurso y te lo dieron.
-            // - Debes notificar a tu planificador Erlang local que esta
-            //   parte del job fue exitosa.
+            if (job_granted(tablaJobs, jobId)) {
+                enviar_formateado(erlangSchedulerSocket, "JOB_GRANTED %lu\n",
+                                  jobId);
+            }
         }
 
     } else if (strcmp(comando, "DENIED") == 0) {
@@ -155,8 +184,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Denego DENIED: Job=%lu\n", cliente->fd,
                    jobId);
 
-            // TODO Lógica:
-            // - Tu petición fue rechazada. Avisar a Erlang.
+            enviar_formateado(erlangSchedulerSocket, "JOB_DENIED %lu\n", jobId);
         }
 
     } else if (strcmp(comando, "RELEASE") == 0) {
@@ -170,30 +198,30 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             ListaPromovidos lista = liberar_recurso(
                 recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso));
 
-            // TODO Lógica:
-            // - Sumar la cantidad devuelta a tu recurso local.
-            // - Revisar la cola FIFO de ese recurso: ¿alcanza para el
-            // primer encolado?
-            // - Si alcanza: descontar, enviarle GRANTED a ese socket
-            // encolado.
+            notificar_lista_promovidos(lista);
         }
 
     } else {
-        fprintf(stderr, "Comando desconocido de Agente C: %s\n", comando);
+        fprintf(stderr, "[AGENTE C %d] Comando desconocido de Agente C: %s\n",
+                cliente->fd, comando);
     }
 }
 
+void eliminar_job(TablaJobs tablaJobs, unsigned long jobId) {
+    int cantCpu = tablajobs_restar_recurso(tablaJobs, jobId, CPU);
+}
+
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
-                            TablaJobs tablaJobs) {
+                            TablaJobs tablaJobs, TablaNodos tablaNodos) {
 
     if (strncmp(mensaje, "JOB_REQUEST", 11) == 0) {
-        int job_id;
+        unsigned long jobId;
         int offset = 0;
 
-        if (sscanf(mensaje, "JOB_REQUEST %d%n", &job_id, &offset) == 1) {
-            printf("[ERLANG %d] Inicia Job ID: %d\n", cliente->fd, job_id);
+        if (sscanf(mensaje, "JOB_REQUEST %lu%n", &jobId, &offset) == 1) {
+            printf("[ERLANG %d] Inicia Job ID: %lu\n", cliente->fd, jobId);
 
-            // Colocamos un puntero justo donde terminó de leer el job_id
+            // Colocamos un puntero justo donde terminó de leer el jobId
             const char *ptr = mensaje + offset;
 
             char host[16];
@@ -233,8 +261,8 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             // Cuando el while termina, significa que ya procesamos todos los
             // recursos.
             printf("[ERLANG %d] Finalizado el parseo de dependencias para "
-                   "Job %d.\n",
-                   cliente->fd, job_id);
+                   "Job %lu\n",
+                   cliente->fd, jobId);
 
         } else {
             fprintf(stderr,
@@ -249,25 +277,20 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
                cliente->fd);
 
-        // TODO Lógica:
-        // - Recorrer tu tabla de nodos activos (la que actualiza el socket
-        // UDP).
-        // - Construir un string con la respuesta formateada según lo acordado
-        // con Erlang.
-        // - Ejemplo simbólico de cómo responder a través del socket:
+        enviar_formateado(cliente->fd, "%s",
+                          tablanodos_obtener_nodos(tablaNodos));
 
     }
 
-    // 3. Comando: JOB_CONCLUDE <job_id> (O el comando que defina la
-    // finalización)
-    else if (strncmp(mensaje, "JOB_CONCLUDE", 12) == 0) {
-        int job_id;
-        if (sscanf(mensaje, "JOB_CONCLUDE %d", &job_id) == 1) {
-            printf("[ERLANG %d] Planificador notifica fin de Job ID: %d\n",
-                   cliente->fd, job_id);
+    else if (strncmp(mensaje, "JOB_RELEASE", 12) == 0) {
+        unsigned long jobId;
+        if (sscanf(mensaje, "JOB_RELEASE %lu", &jobId) == 1) {
+            printf("[ERLANG %d] Planificador notifica fin de Job ID: %lu\n",
+                   cliente->fd, jobId);
 
+            eliminar_job(tablaJobs, jobId);
             // TODO Lógica:
-            // - Liberar los recursos locales asociados a este job_id.
+            // - Liberar los recursos locales asociados a este jobId.
             // - Enviar los comandos "RELEASE" correspondientes a los agentes C
             //   remotos que hayan prestado recursos para este trabajo.
         }

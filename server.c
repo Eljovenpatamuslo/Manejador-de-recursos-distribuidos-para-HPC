@@ -24,7 +24,7 @@ TablaJobs tablaJobs;
 RecursosNodo recNodo;
 
 int publicListenSocket;
-int localListenSocket;
+int erlangSchedulerSocket;
 int udpSocket;
 int epollFd;
 int timerSocket;
@@ -116,7 +116,7 @@ void *gestionar_epoll(void *arg) {
                                      EPOLL_CTL_MOD);
             }
 
-            else if (eventFd == localListenSocket ||
+            else if (eventFd == erlangSchedulerSocket ||
                      eventFd == publicListenSocket) {
                 if (aceptar_listen_sock_epoll(eventFd) == 1)
                     continue;
@@ -126,8 +126,9 @@ void *gestionar_epoll(void *arg) {
                 ClienteConexion *cliente =
                     (ClienteConexion *)events[n].data.ptr;
 
-                int sockClosed = leer_y_procesar_cliente(cliente, recNodo,
-                                                         tablaJobs, tablaNodos);
+                int sockClosed =
+                    leer_y_procesar_cliente(cliente, recNodo, tablaJobs,
+                                            tablaNodos, erlangSchedulerSocket);
 
                 if (sockClosed) {
                     close(cliente->fd);
@@ -147,7 +148,7 @@ int main() {
     recNodo = inicializar_recursos_locales();
 
     publicListenSocket = crear_nonblocking_socket(PUBLIC_DIR, PUERTO_TCP);
-    localListenSocket = crear_nonblocking_socket(LOCAL_DIR, PUERTO_TCP);
+    erlangSchedulerSocket = crear_nonblocking_socket(LOCAL_DIR, PUERTO_TCP);
     udpSocket = crear_socket_udp_broadcast(PUERTO_UDP);
     timerSocket = crear_timer_anuncio(5);
 
@@ -176,7 +177,7 @@ int main() {
     sleep(2);
     printf("Empiezo a escuchar peticiones en los listen sockets\n");
     agregar_socket_epoll(publicListenSocket, EPOLLIN, NULL, EPOLL_CTL_ADD);
-    agregar_socket_epoll(localListenSocket, EPOLLIN, NULL, EPOLL_CTL_ADD);
+    agregar_socket_epoll(erlangSchedulerSocket, EPOLLIN, NULL, EPOLL_CTL_ADD);
 
     pthread_join(id[0], NULL);
 
