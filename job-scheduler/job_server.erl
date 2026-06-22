@@ -82,6 +82,8 @@ adquirir_loop(JobId, Recursos, Intentos) ->
     end.
 
 manejar_fallo(JobId, Recursos, Intentos) ->
+    %%Si agarró un recurso, entonces lo suelta
+    send_recv_manager:enviar_send({jobRelease, JobId}),
     SiguienteIntento = Intentos + 1,
     %% 1. Evitar Livelock: Dormir al proceso un tiempo exponencial con aleatoriedad
     aplicar_timeout(JobId, SiguienteIntento),
