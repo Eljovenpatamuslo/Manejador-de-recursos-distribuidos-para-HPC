@@ -1,9 +1,42 @@
--module(job_generator).
+-module(manejador_recursos).
 
--export([obtener_recursos_para_jobs/1]).
+-export([obtener_recursos_para_jobs/1,format_nodes/1,obtener_y_formatear_nodos/0]).
 
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
+
+obtener_y_formatear_nodos() ->
+    case send_recv_manager:obtener_nodos() of
+        {ok,Response} -> 
+            Nodes = string:lexemes(Response,";"),
+            ParsedNodes = format_nodes(Nodes),
+            ParsedNodes;
+
+        {error,Razon} -> 
+            logF:log("Error al recibir la lista de nodos, razon:~p ~n",[Razon]),
+            {error, Razon}
+    end.
+
+format_nodes([Node]) -> 
+    case string:lexemes(Node,":") of
+        [Ip,Puerto,"cpu",Cpu,"mem",Mem,"gpu",Gpu]->
+            Recursos = #recursos{cpu = list_to_integer(Cpu),mem = list_to_integer(Mem),gpu = list_to_integer(Gpu)},
+            Direccion = #direccion{ip = Ip, puerto = Puerto},
+            [{Direccion,Recursos}];
+
+        [Ip,Puerto,"cpu",Cpu,"mem",Mem] ->
+            Recursos = #recursos{cpu = list_to_integer(Cpu),mem = list_to_integer(Mem),gpu = 0},
+            Direccion = #direccion{ip = Ip, puerto = Puerto},
+            [{Direccion,Recursos}];
+
+        _ -> logF:log("Error: el orden de la solicitud de recursos no es compatible")
+        
+    end;
+
+format_nodes([Node | Nodes]) ->
+    List1 = format_nodes([Node]),
+    List2 = format_nodes(Nodes),
+    lists:append(List1,List2).
 
 
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]

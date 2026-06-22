@@ -7,6 +7,7 @@ crear_error_managment() ->
     register(log,Pid),
 
     log(msg,"---Log del scheduler de erlang---~n"),
+    log(msg,"fecha: [~p] hora: [~p] ~n",[date(),time()]),
     ok.
 
 logServer() ->
@@ -20,6 +21,7 @@ logServer() ->
             ok = io:fwrite(Msg,Args),
             Str = io_lib:format(Msg,Args),
             file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]),
+            log(msg,"---Terminando---~n"),
             exit(fatal)
     end.
 

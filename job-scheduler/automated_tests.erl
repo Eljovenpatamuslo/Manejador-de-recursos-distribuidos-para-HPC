@@ -18,7 +18,7 @@ run_suite() ->
     ok = test_parsing_multiples_nodos(),
     
     %% 2. Pruebas Unitarias del Generador de Jobs
-    ok = test_job_generator_output(),
+    ok = test_manejador_recursos_output(),
 
     %% 3. Pruebas de Integración con Inyección de Escenarios de Red
     ok = run_integration_tests(),
@@ -33,7 +33,7 @@ run_suite() ->
 test_parsing_con_gpu() ->
     io:format("[TEST] Validando format_nodes/1 con especificación GPU... "),
     Input = ["192.168.1.10:8100:cpu:4:mem:8192:gpu:1"],
-    Result = job_scheduler:format_nodes(Input),
+    Result = manejador_recursos:format_nodes(Input),
     case Result of
         [{#direccion{ip="192.168.1.10", puerto="8100"}, #recursos{cpu=4, mem=8192, gpu=1}}] ->
             io:format("OK~n"), ok;
@@ -48,7 +48,7 @@ test_parsing_con_gpu() ->
 test_parsing_sin_gpu() ->
     io:format("[TEST] Validando format_nodes/1 sin especificación GPU... "),
     Input = ["192.168.1.11:8101:cpu:2:mem:4096"],
-    Result = job_scheduler:format_nodes(Input),
+    Result = manejador_recursos:format_nodes(Input),
     case Result of
         [{#direccion{ip="192.168.1.11", puerto="8101"}, #recursos{cpu=2, mem=4096, gpu=0}}] ->
             io:format("OK~n"), ok;
@@ -63,7 +63,7 @@ test_parsing_sin_gpu() ->
 test_parsing_multiples_nodos() ->
     io:format("[TEST] Validando recursión de format_nodes/1 con múltiples nodos... "),
     Input = ["192.168.1.10:8100:cpu:4:mem:8192:gpu:1", "192.168.1.11:8101:cpu:2:mem:4096"],
-    Result = job_scheduler:format_nodes(Input),
+    Result = manejador_recursos:format_nodes(Input),
     case length(Result) of
         2 ->
             io:format("OK~n"), ok;
@@ -75,15 +75,15 @@ test_parsing_multiples_nodos() ->
 %% ===================================================================
 %% CASO 4: Validación de Estructura del Generador Estocástico
 %% ===================================================================
-test_job_generator_output() ->
+test_manejador_recursos_output() ->
     io:format("[TEST] Validando formato estricto @ip:puerto:recurso:cantidad... "),
     MockNodes = [{#direccion{ip="127.0.0.1", puerto="9000"}, #recursos{cpu=2, mem=1024, gpu=0}}],
-    Jobs = job_generator:obtener_recursos_para_jobs(MockNodes),
+    Jobs = manejador_recursos:obtener_recursos_para_jobs(MockNodes),
     
     case Jobs of
         [] -> 
             io:format("FALLÓ: El generador retornó una lista vacía~n"),
-            exit(test_job_generator_empty);
+            exit(test_manejador_recursos_empty);
         [FirstJob | _] ->
             %% FirstJob tiene múltiples recursos separados por espacio. Agarramos el primero.
             [PrimerRecurso | _] = string:lexemes(FirstJob, " "),
@@ -98,7 +98,7 @@ test_job_generator_output() ->
                     io:format("OK~n"), ok;
                 _ -> 
                     io:format("FALLÓ: El string no respeta la estructura estricta. Obtenido: ~p~n", [PrimerRecurso]),
-                    exit(test_job_generator_invalid_format)
+                    exit(test_manejador_recursos_invalid_format)
             end
     end.
 
