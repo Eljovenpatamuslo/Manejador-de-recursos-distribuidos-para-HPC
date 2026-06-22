@@ -181,7 +181,7 @@ unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
 
                 desconectar_job(tabla, actual);
                 tabla->cantJobs--;
-                
+
                 liberar_memoria_job(actual);
             }
 
@@ -216,9 +216,12 @@ int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId) {
     return flag;
 }
 
-void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, void *datosCliente) {
-    
+void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
+                                TipoRecurso rec, unsigned long cant,
+                                const char *ipDestino,
+                                unsigned short puertoDestino,
+                                void *datosCliente) {
+
     DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
     assert(nuevosDatos != NULL);
 
@@ -243,7 +246,8 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRe
     tablajobs_insertar(tablaJobs, nuevosDatos);
 }
 
-void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[], unsigned short puerto) {
+void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
+                               unsigned short puerto) {
     unsigned idx = jobId % MAX_JOBS;
 
     pthread_mutex_lock(&tabla->mutex);
@@ -251,8 +255,9 @@ void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[], u
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
-            strcmp(actual->datos->nodoIp, ip) == 0 && actual->datos->nodoPuerto == puerto) {
-            
+            strcmp(actual->datos->nodoIp, ip) == 0 &&
+            actual->datos->nodoPuerto == puerto) {
+
             actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
             actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
             actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
@@ -325,7 +330,7 @@ void desconectar_job(TablaJobs tabla, JobActivo *job) {
     }
 }
 
-void liberar_memoria_job(JobActivo* job) {
+void liberar_memoria_job(JobActivo *job) {
     free(job->datos->datosCliente);
     free(job->datos->recPedidos);
     free(job->datos->recReservados);

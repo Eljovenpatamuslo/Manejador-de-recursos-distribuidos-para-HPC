@@ -28,8 +28,9 @@ RecursosNodo inicializar_recursos_locales() {
     return recursos;
 }
 
-int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, void *datosCliente) {
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                     unsigned long jobId, TipoRecurso rec, unsigned long cant,
+                     char ip[], unsigned short puerto, void *datosCliente) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -50,7 +51,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
         nuevosDatos->jobId = jobId;
         nuevosDatos->rol = JOB_REMOTO;
-        nuevosDatos->datosCliente = datosCliente
+        nuevosDatos->datosCliente = datosCliente;
         strncpy(nuevosDatos->nodoIp, ip, 16);
         nuevosDatos->nodoPuerto = puerto;
         nuevosDatos->recReservados = inicializar_recursos_reservados(rec, cant);
@@ -145,7 +146,6 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             nuevoNodo->jobId = solJobId;
             strncpy(nuevoNodo->ip, solIp, 16);
             nuevoNodo->puerto = solPuerto;
-            nuevoNodo->fd = solFd;
 
             // Lo insertamos al principio de nuestra lista de promovidos
             nuevoNodo->sig = promovidosPrimero;
@@ -188,3 +188,4 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
 int comp_recursos(RecursosReservados a, RecursosReservados b) {
     return a->cpu == b->cpu && a->mem == b->mem && a->gpu == b->gpu;
 }
+

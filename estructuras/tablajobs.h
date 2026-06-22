@@ -90,7 +90,7 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
                                 unsigned short puertoDestino,
                                 void *datosCliente);
 
-void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[],
+void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
                                unsigned short puerto);
 
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
