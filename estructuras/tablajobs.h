@@ -92,6 +92,9 @@ int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
                                 unsigned long cant, const char* ipDestino, unsigned short puertoDestino);
 
+void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, TipoRecurso rec, 
+                               char ip[], unsigned short puerto);
+
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
 
 void desconectar_job(TablaJobs tabla, JobActivo* job);

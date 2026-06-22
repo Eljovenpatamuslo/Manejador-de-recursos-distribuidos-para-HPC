@@ -242,6 +242,25 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRe
     tablajobs_insertar(tablaJobs, nuevosDatos);
 }
 
+void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, TipoRecurso rec, 
+                               char ip[], unsigned short puerto) {
+    unsigned idx = jobId % MAX_JOBS;
+
+    pthread_mutex_lock(&tabla->mutex);
+
+    JobActivo *actual = tabla->tablaPorId[idx];
+    while (actual != NULL) {
+        if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
+            strcmp(actual->datos->nodoIp, ip) == 0 && actual->datos->nodoPuerto == puerto) {
+            actual->datos->recReservados = actual->datos->recPedidos;
+            break;
+        }
+        actual = actual->sigJobId;
+    }
+
+    pthread_mutex_unlock(&tabla->mutex);
+}
+
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId) {
     assert(tabla != NULL);
     
