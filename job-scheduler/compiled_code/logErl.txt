@@ -8,11 +8,11 @@ job_server iniciado
 [Job 66] EXITO! Todos los recursos concedidos.
 [Job 66] Ejecutando procesamiento en el cluster simulado...
 [Job 98] ALERTA: job denegado ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"). Iniciando aborto...
-[Job 98] Respetando backoff de 409 ms para mitigar contenci髇.
+[Job 98] Respetando backoff de 409 ms para mitigar contenci贸n.
 [Job 98] Reiniciando ciclo de peticiones (Intento 1).
 [Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
 [Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048").
-[Job 98] Respetando backoff de 653 ms para mitigar contenci髇.
+[Job 98] Respetando backoff de 653 ms para mitigar contenci贸n.
 [Job 98] Reiniciando ciclo de peticiones (Intento 2).
 [Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
 [Job 98] EXITO! Todos los recursos concedidos.
@@ -32,11 +32,11 @@ job_server iniciado
 [Job 66] EXITO! Todos los recursos concedidos.
 [Job 66] Ejecutando procesamiento en el cluster simulado...
 [Job 98] ALERTA: job denegado ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"). Iniciando aborto...
-[Job 98] Respetando backoff de 357 ms para mitigar contenci髇.
+[Job 98] Respetando backoff de 357 ms para mitigar contenci贸n.
 [Job 98] Reiniciando ciclo de peticiones (Intento 1).
 [Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
 [Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024").
-[Job 98] Respetando backoff de 656 ms para mitigar contenci髇.
+[Job 98] Respetando backoff de 656 ms para mitigar contenci贸n.
 [Job 98] Reiniciando ciclo de peticiones (Intento 2).
 [Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
 [Job 98] EXITO! Todos los recursos concedidos.
