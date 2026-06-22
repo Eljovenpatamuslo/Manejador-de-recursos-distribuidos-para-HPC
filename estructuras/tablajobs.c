@@ -252,7 +252,14 @@ void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, TipoRecurso 
     while (actual != NULL) {
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
             strcmp(actual->datos->nodoIp, ip) == 0 && actual->datos->nodoPuerto == puerto) {
-            actual->datos->recReservados = actual->datos->recPedidos;
+            
+            if (rec == CPU) {
+                actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
+            } else if (rec == MEM) {
+                actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
+            } else if (rec == GPU) {
+                actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
+            }
             break;
         }
         actual = actual->sigJobId;
