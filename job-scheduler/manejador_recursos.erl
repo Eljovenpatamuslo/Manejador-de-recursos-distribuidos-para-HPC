@@ -1,5 +1,6 @@
 -module(manejador_recursos).
 
+
 -export([obtener_recursos_para_jobs/1,format_nodes/1,obtener_y_formatear_nodos/0]).
 
 -record(recursos,{cpu,mem,gpu}).
