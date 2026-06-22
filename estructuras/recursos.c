@@ -48,10 +48,10 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
 
         DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
         assert(nuevosDatos != NULL);
-            
+
         nuevosDatos->jobId = jobId;
         nuevosDatos->rol = JOB_REMOTO;
-        nuevosDatos->fd = fd
+        nuevosDatos->fd = fd;
         strncpy(nuevosDatos->nodoIp, ip, 16);
         nuevosDatos->nodoPuerto = puerto;
         nuevosDatos->recReservados = inicializar_recursos_reservados(rec, cant);
@@ -132,8 +132,10 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             strncpy(nuevosDatos->nodoIp, solIp, 16);
             nuevosDatos->nodoPuerto = solPuerto;
 
-            nuevosDatos->recReservados = inicializar_recursos_reservados(rec, solCant);
-            nuevosDatos->recPedidos = inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recReservados =
+                inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recPedidos =
+                inicializar_recursos_reservados(rec, solCant);
 
             // Insertamos o actualizamos en la tabla general
             tablajobs_insertar(tablaJobs, nuevosDatos);
@@ -144,6 +146,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             nuevoNodo->jobId = solJobId;
             strncpy(nuevoNodo->ip, solIp, 16);
             nuevoNodo->puerto = solPuerto;
+            nuevoNodo->fd = solFd;
 
             // Lo insertamos al principio de nuestra lista de promovidos
             nuevoNodo->sig = promovidosPrimero;

@@ -36,6 +36,7 @@ struct _NodoPromovido {
     unsigned long jobId;
     char ip[16];
     unsigned short puerto;
+    int fd;
     struct _NodoPromovido *sig;
 };
 typedef struct _NodoPromovido *ListaPromovidos;

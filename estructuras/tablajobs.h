@@ -11,10 +11,7 @@
 
 typedef enum { CPU, MEM, GPU } TipoRecurso;
 
-typedef enum {
-    JOB_LOCAL,
-    JOB_REMOTO
-} RolJob;
+typedef enum { JOB_LOCAL, JOB_REMOTO } RolJob;
 
 struct _RecursosReservados {
     unsigned int cpu;
@@ -82,18 +79,22 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos);
 void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
                                unsigned short puerto, RecursosNodo recursos);
 
-unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId, TipoRecurso rec);
+unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
+                                       TipoRecurso rec);
 
 int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 
-void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino);
+void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
+                                TipoRecurso rec, unsigned long cant,
+                                const char *ipDestino,
+                                unsigned short puertoDestino);
 
-void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, TipoRecurso rec, 
-                               char ip[], unsigned short puerto);
+void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId,
+                               TipoRecurso rec, char ip[],
+                               unsigned short puerto);
 
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
 
-void desconectar_job(TablaJobs tabla, JobActivo* job);
+void desconectar_job(TablaJobs tabla, JobActivo *job);
 
 #endif /* _TABLAJOBS_H_ */

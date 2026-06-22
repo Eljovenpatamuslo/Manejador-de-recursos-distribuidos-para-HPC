@@ -13,7 +13,11 @@
 
 #define MAX_MSG_LEN 256
 
-typedef enum { CLIENTE_ERLANG, CLIENTE_AGENTE_C } TipoCliente;
+typedef enum {
+    CLIENTE_ERLANG,
+    CLIENTE_AGENTE_C,
+    CONEXION_SALIENTE
+} TipoCliente;
 
 typedef struct {
     int fd;
@@ -21,20 +25,23 @@ typedef struct {
     char buffer[4096];
     int bytes_in_buffer;
     char ip[16];
+    char mensaje[256];
 } ClienteConexion;
 
-ClienteConexion *crear_cliente(int eventfd, int tipo, char ip[]);
+ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
+                               char *mensaje);
 
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int erlangSchedulerSocket);
+                            int erlangSchedulerSocket, int epollFd);
 
 void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                       RecursosNodo recNodo, TablaJobs tablaJobs,
                       TablaNodos tablaNodos, int erlangSchedulerSocket);
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
-                            TablaJobs tablaJobs, TablaNodos tablaNodos);
+                            TablaJobs tablaJobs, TablaNodos tablaNodos,
+                            int epollFd);
 
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp);
 

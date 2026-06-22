@@ -2,8 +2,13 @@
 #include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
 #include "estructuras/tablanodos.h"
+#include "sockets.h"
+#include <string.h>
 
-ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
+int enviar_formateado(int fd, const char *formato, ...);
+
+ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
+                               char *mensaje) {
     ClienteConexion *nuevoCliente = malloc(sizeof(ClienteConexion));
 
     nuevoCliente->fd = clienteFD;
@@ -12,12 +17,22 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[]) {
 
     strncpy(nuevoCliente->ip, ip, INET_ADDRSTRLEN);
 
+    strncpy(nuevoCliente->mensaje, mensaje, 256);
+
     return nuevoCliente;
 }
 
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int erlangSchedulerSocket) {
+                            int erlangFd, int epollFd) {
+
+    if (cliente->tipo == CONEXION_SALIENTE) {
+        enviar_formateado(cliente->fd, cliente->mensaje);
+        cliente->tipo = CLIENTE_AGENTE_C;
+
+        return 0;
+    }
+
     int espacio_libre = sizeof(cliente->buffer) - cliente->bytes_in_buffer - 1;
 
     int bytes_leidos = read(
@@ -49,10 +64,10 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
 
         if (cliente->tipo == CLIENTE_AGENTE_C) {
             manejar_agente_c(cliente, cliente->buffer, recNodo, tablaJobs,
-                             tablaNodos, erlangSchedulerSocket);
+                             tablaNodos, erlangFd);
         } else {
             manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs,
-                                   tablaNodos);
+                                   tablaNodos, epollFd);
         }
 
         int bytes_sobrantes = cliente->bytes_in_buffer - (longitud_mensaje + 1);
@@ -121,7 +136,7 @@ void notificar_lista_promovidos(ListaPromovidos lista) {
 
 void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                       RecursosNodo recNodo, TablaJobs tablaJobs,
-                      TablaNodos tablaNodos, int erlangSchedulerSocket) {
+                      TablaNodos tablaNodos, int erlangFd) {
     char comando[16];
     unsigned long jobId;
     char recurso[16];
@@ -172,9 +187,8 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Concedio GRANTED: Job=%lu\n", cliente->fd,
                    jobId);
 
-            if (job_granted(tablaJobs, jobId)) {
-                enviar_formateado(erlangSchedulerSocket, "JOB_GRANTED %lu\n",
-                                  jobId);
+            if (tablajobs_job_granted(tablaJobs, jobId)) {
+                enviar_formateado(erlangFd, "JOB_GRANTED %lu\n", jobId);
             }
         }
 
@@ -184,7 +198,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Denego DENIED: Job=%lu\n", cliente->fd,
                    jobId);
 
-            enviar_formateado(erlangSchedulerSocket, "JOB_DENIED %lu\n", jobId);
+            enviar_formateado(erlangFd, "JOB_DENIED %lu\n", jobId);
         }
 
     } else if (strcmp(comando, "RELEASE") == 0) {
@@ -207,12 +221,36 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
     }
 }
 
-void eliminar_job(TablaJobs tablaJobs, unsigned long jobId) {
-    int cantCpu = tablajobs_restar_recurso(tablaJobs, jobId, CPU);
+void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
+    ListaResultados lista = tablajobs_release_job(tablaJobs, jobId);
+    struct _NodoResultado *actual = lista;
+
+    while (actual != NULL) {
+        char rec[4];
+        int cant;
+        if (actual->datos->recReservados->cpu > 0) {
+            strcpy(rec, "cpu");
+            cant = actual->datos->recReservados->cpu;
+        } else if (actual->datos->recReservados->mem > 0) {
+            strcpy(rec, "mem");
+            cant = actual->datos->recReservados->mem;
+        } else if (actual->datos->recReservados->gpu > 0) {
+            strcpy(rec, "gpu");
+            cant = actual->datos->recReservados->gpu;
+        } else {
+            continue;
+        }
+
+        enviar_formateado(actual->fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
+        close(actual->fd);
+
+        actual = actual->sig;
+    }
 }
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
-                            TablaJobs tablaJobs, TablaNodos tablaNodos) {
+                            TablaJobs tablaJobs, TablaNodos tablaNodos,
+                            int epollFd) {
 
     if (strncmp(mensaje, "JOB_REQUEST", 11) == 0) {
         unsigned long jobId;
@@ -224,7 +262,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             // Colocamos un puntero justo donde terminó de leer el jobId
             const char *ptr = mensaje + offset;
 
-            char host[16];
+            char ip[16];
             char recurso[16];
             int cantidad;
             int bytes_leidos;
@@ -242,24 +280,42 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             // %d        : Lee el entero (cantidad)
             // %n        : Guarda cuántos caracteres ocupó este bloque entero
 
-            while (sscanf(ptr, " @%15[^:]:%15[^:]:%d%n", host, recurso,
-                          &cantidad, &bytes_leidos) == 3) {
+            while (sscanf(ptr, " @%15[^:]:%15[^:]:%d%n", ip, recurso, &cantidad,
+                          &bytes_leidos) == 3) {
                 printf("  -> Dependencia: Host=%s, Recurso=%s, Cantidad=%d\n",
-                       host, recurso, cantidad);
+                       ip, recurso, cantidad);
+
+                DatosNodo datos = tablanodos_buscar(tablaNodos, ip);
+
+                int fdSalida =
+                    crear_socket_saliente_nobloqueante(ip, datos.puerto);
+
+                registrar_solicitud_propia(
+                    tablaJobs, jobId, tipo_recurso_desde_string(recurso),
+                    cantidad, ip, datos.puerto, fdSalida);
+
+                ClienteConexion *nueva_conexion =
+                    crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
+
+                snprintf(nueva_conexion->mensaje, 256, "RESERVE %lu %s %d\n",
+                         jobId, recurso, cantidad);
+
+                // Cuando se arme la conexion se enviara el mensaje guardado en
+                // la estructura
+                agregar_socket_epoll(epollFd, fdSalida, EPOLLOUT | EPOLLONESHOT,
+                                     nueva_conexion, EPOLL_CTL_ADD);
 
                 // TODO Lógica:
                 // - Guardar en tu tabla del Job que requiere 'cantidad' de
                 // 'recurso' en 'host'.
-                // - Si host es tu propia IP (o 127.0.0.1), reservas localmente.
+                // - Si host es tu propia IP (o 127.0.0.1), reservas
+                // localmente.
                 // - Si es otra IP, lo encolas para enviar un RESERVE a ese
                 // Agente C.
 
-                // Avanzamos el puntero para la siguiente iteración del while
                 ptr += bytes_leidos;
             }
 
-            // Cuando el while termina, significa que ya procesamos todos los
-            // recursos.
             printf("[ERLANG %d] Finalizado el parseo de dependencias para "
                    "Job %lu\n",
                    cliente->fd, jobId);
@@ -272,7 +328,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         }
     }
 
-    // 2. Comando: GET NODES
     else if (strncmp(mensaje, "GET NODES", 9) == 0) {
         printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
                cliente->fd);
@@ -288,23 +343,13 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             printf("[ERLANG %d] Planificador notifica fin de Job ID: %lu\n",
                    cliente->fd, jobId);
 
-            eliminar_job(tablaJobs, jobId);
+            liberar_job(tablaJobs, jobId);
             // TODO Lógica:
             // - Liberar los recursos locales asociados a este jobId.
             // - Enviar los comandos "RELEASE" correspondientes a los agentes C
             //   remotos que hayan prestado recursos para este trabajo.
         }
     }
-
-    // else {
-    //     fprintf(stderr, "[Erlang FD %d] Comando no reconocido: %s\n",
-    //             cliente->fd, mensaje);
-    //
-    //     // Buena práctica: Enviar un mensaje de error legible al cliente para
-    //     // evitar que se quede colgado
-    //     char err_msg[] = "ERROR: Unknown command\n";
-    //     send(cliente->fd, err_msg, strlen(err_msg), 0);
-    // }
 }
 
 void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {

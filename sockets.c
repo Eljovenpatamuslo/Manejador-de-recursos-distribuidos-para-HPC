@@ -1,6 +1,6 @@
 #include "sockets.h"
 
-int crear_nonblocking_socket(const char *ip, int port) {
+int crear_nonblocking_listen_socket(const char *ip, int port) {
     int sfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sfd == -1) {
         perror("crear_nonblocking_socket: socket");
@@ -96,4 +96,60 @@ int crear_timer_anuncio(int intervalo_segundos) {
     }
 
     return tfd;
+}
+
+int crear_socket_saliente_nobloqueante(const char *ip, unsigned short puerto) {
+    // 1. Creamos el socket TCP y le inyectamos la flag SOCK_NONBLOCK
+    // directamente
+    int sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (sock_fd == -1) {
+        perror("Error al crear socket de salida no bloqueante");
+        return -1;
+    }
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(puerto);
+
+    if (inet_pton(AF_INET, ip, &dest_addr.sin_addr) <= 0) {
+        perror("Error en inet_pton: IP inválida");
+        close(sock_fd);
+        return -1;
+    }
+
+    // 2. Intentamos conectar. Al ser no bloqueante, no va a esperar el
+    // handshake.
+    if (connect(sock_fd, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) ==
+        -1) {
+        // Si el error es EINPROGRESS, todo está perfecto. Se está conectando de
+        // fondo.
+        if (errno != EINPROGRESS) {
+            perror("Fallo crítico en connect hacia el otro nodo");
+            close(sock_fd);
+            return -1;
+        }
+    }
+
+    // Devolvemos el descriptor. Aún no está listo para usarse, epoll nos
+    // avisará.
+    return sock_fd;
+}
+
+int agregar_socket_epoll(int epollFd, int socket, int evFlags, void *evDataPtr,
+                         int epollCtlFlags) {
+    struct epoll_event ev;
+    ev.events = evFlags;
+
+    if (evDataPtr != NULL) {
+        ev.data.ptr = evDataPtr;
+    } else {
+        ev.data.fd = socket;
+    }
+
+    if (epoll_ctl(epollFd, epollCtlFlags, socket, &ev) == -1) {
+        perror("agregar_socket_epoll: epoll_ctl");
+        return -1;
+    }
+    return 0;
 }
