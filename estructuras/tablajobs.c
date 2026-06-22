@@ -24,10 +24,7 @@ void tablajobs_destruir(TablaJobs tabla) {
         JobActivo *actual = tabla->tablaPorId[i];
         while (actual != NULL) {
             JobActivo *sig = actual->sigJobId;
-            free(actual->datos->recPedidos);
-            free(actual->datos->recReservados);
-            free(actual->datos);
-            free(actual);
+            liberar_memoria_job(actual);
             actual = sig;
         }
     }
@@ -75,6 +72,7 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
 
             pthread_mutex_unlock(&tabla->mutex);
 
+            free(datos->datosCliente);
             free(datos->recPedidos);
             free(datos->recReservados);
             free(datos);
@@ -147,9 +145,7 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
         }
 
         // Liberación final de memoria
-        free(jobsABorrar->datos->recReservados);
-        free(jobsABorrar->datos);
-        free(jobsABorrar);
+        liberar_memoria_job(jobsABorrar);
         jobsABorrar = sig;
     }
 }
@@ -185,11 +181,8 @@ unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
 
                 desconectar_job(tabla, actual);
                 tabla->cantJobs--;
-
-                free(actual->datos->recPedidos);
-                free(actual->datos->recReservados);
-                free(actual->datos);
-                free(actual);
+                
+                liberar_memoria_job(actual);
             }
 
             pthread_mutex_unlock(&tabla->mutex);
@@ -224,14 +217,14 @@ int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId) {
 }
 
 void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, int fd) {
+                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, void *datosCliente) {
     
     DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
     assert(nuevosDatos != NULL);
 
     nuevosDatos->jobId = jobId;
     nuevosDatos->rol = JOB_LOCAL;
-    nuevosDatos->fd = fd;
+    nuevosDatos->datosCliente = datosCliente;
     strncpy(nuevosDatos->nodoIp, ipDestino, 16);
     nuevosDatos->nodoPuerto = puertoDestino;
 
@@ -250,9 +243,7 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRe
     tablajobs_insertar(tablaJobs, nuevosDatos);
 }
 
-void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId,
-                               TipoRecurso rec, char ip[],
-                               unsigned short puerto) {
+void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[], unsigned short puerto) {
     unsigned idx = jobId % MAX_JOBS;
 
     pthread_mutex_lock(&tabla->mutex);
@@ -262,13 +253,10 @@ void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId,
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
             strcmp(actual->datos->nodoIp, ip) == 0 && actual->datos->nodoPuerto == puerto) {
             
-            if (rec == CPU) {
-                actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
-            } else if (rec == MEM) {
-                actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
-            } else if (rec == GPU) {
-                actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
-            }
+            actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
+            actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
+            actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
+
             break;
         }
         actual = actual->sigJobId;
@@ -335,4 +323,12 @@ void desconectar_job(TablaJobs tabla, JobActivo *job) {
     if (job->sigJobNodo != NULL) {
         job->sigJobNodo->antJobNodo = job->antJobNodo;
     }
+}
+
+void liberar_memoria_job(JobActivo* job) {
+    free(job->datos->datosCliente);
+    free(job->datos->recPedidos);
+    free(job->datos->recReservados);
+    free(job->datos);
+    free(job);
 }
