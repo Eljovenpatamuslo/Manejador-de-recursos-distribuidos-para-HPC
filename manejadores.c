@@ -1,5 +1,6 @@
 #include "manejadores.h"
-#include "estructuras/tablajobs.h"
+
+#define debug(i) fprintf(stderr, "HOLA: %d\n", i);
 
 int enviar_formateado(int fd, const char *formato, ...);
 
@@ -316,13 +317,16 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         }
     }
 
-    else if (strncmp(mensaje, "GET NODES", 9) == 0) {
+    else if (strncmp(mensaje, "GET_NODES", 9) == 0) {
         printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
                cliente->fd);
-
+        debug(1);
         tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
-        enviar_formateado(cliente->fd, "%s",
-                          tablanodos_obtener_nodos(tablaNodos));
+        debug(2);
+        char *nodos = tablanodos_obtener_nodos(tablaNodos);
+        debug(3);
+        enviar_formateado(cliente->fd, "%s", nodos);
+        debug(4);
 
     }
 
