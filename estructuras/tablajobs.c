@@ -245,8 +245,9 @@ int job_granted(TablaJobs tabla, unsigned long jobId) {
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
         if (actual->datos->jobId == jobId) {
-            flag = comp_recursos(actual->datos->recPedidos, actual->datos->recReservados);
-            
+            flag = comp_recursos(actual->datos->recPedidos,
+                                 actual->datos->recReservados);
+
             break;
         }
     }

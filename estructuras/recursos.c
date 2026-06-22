@@ -28,8 +28,9 @@ RecursosNodo inicializar_recursos_locales() {
     return recursos;
 }
 
-int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, int fd) {
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                     unsigned long jobId, TipoRecurso rec, unsigned long cant,
+                     char ip[], unsigned short puerto, int fd) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -44,7 +45,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
     DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
     assert(nuevosDatos != NULL);
-        
+
     nuevosDatos->jobId = jobId;
     strncpy(nuevosDatos->nodoIp, ip, 16);
     nuevosDatos->nodoPuerto = puerto;
@@ -69,7 +70,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
         strncpy(nuevaSolicitud->ip, ip, 16);
         nuevaSolicitud->puerto = puerto;
         nuevaSolicitud->cant = cant;
-        nuevaSolicitud->fd = fd
+        nuevaSolicitud->fd = fd;
 
         cola_encolar(recurso->solicitudPend, nuevaSolicitud);
 
@@ -97,7 +98,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
     unsigned long cantALiberar =
         tablajobs_restar_recurso(tablaJobs, jobId, rec);
     if (cantALiberar == 0) {
-        return; // El job no tenía este recurso asignado
+        return NULL; // El job no tenía este recurso asignado
     }
 
     pthread_mutex_lock(&recurso->mutex);
@@ -185,4 +186,3 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
 int comp_recursos(RecursosReservados a, RecursosReservados b) {
     return a->cpu == b->cpu && a->mem == b->mem && a->gpu == b->gpu;
 }
-        
