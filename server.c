@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <sys/epoll.h>
 
-#define PUBLIC_DIR "127.0.0.1"
+#define PUBLIC_DIR "192.168.0.14"
 #define LOCAL_DIR "127.0.0.2"
 #define PUERTO_TCP 12000
 #define PUERTO_UDP 12529
@@ -73,62 +73,6 @@ static int aceptar_listen_sock_epoll(int eventFd) {
     return 0;
 }
 
-// void *gestionar_epoll(void *arg) {
-//     struct epoll_event events[MAX_EV_EPOLL];
-//     struct epoll_event ev;
-//
-//     for (int numFds, n;;) {
-//         numFds = epoll_wait(epollFd, events, MAX_EV_EPOLL, -1);
-//
-//         if (numFds == -1)
-//             perror("epoll_wait");
-//
-//         for (n = 0; n < numFds; ++n) {
-//             int eventFd = events[n].data.fd;
-//
-//             if (eventFd == timerSocket) {
-//                 // Debo anunciarme
-//                 manejar_timer(timerSocket, udpSocket, PUERTO_UDP);
-//                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN |
-//                 EPOLLONESHOT,
-//                                      NULL, EPOLL_CTL_MOD);
-//             }
-//
-//             else if (eventFd == udpSocket) {
-//                 // Anuncio de otro nodo
-//                 registrar_nodo(udpSocket, tablaNodos);
-//                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN |
-//                 EPOLLONESHOT,
-//                                      NULL, EPOLL_CTL_MOD);
-//             }
-//
-//             else if (eventFd == socketEscuchaLocal ||
-//                      eventFd == socketEscuchaPublica) {
-//                 if (aceptar_listen_sock_epoll(eventFd) == 1)
-//                     continue;
-//             }
-//
-//             else {
-//                 ClienteConexion *cliente =
-//                     (ClienteConexion *)events[n].data.ptr;
-//
-//                 int sockClosed = leer_y_procesar_cliente(
-//                     cliente, recNodo, tablaJobs, tablaNodos, erlangFd,
-//                     epollFd);
-//
-//                 if (sockClosed) {
-//                     close(cliente->fd);
-//                     free(cliente);
-//                 } else {
-//                     agregar_socket_epoll(epollFd, cliente->fd,
-//                                          EPOLLIN | EPOLLONESHOT, cliente,
-//                                          EPOLL_CTL_MOD);
-//                 }
-//             }
-//         }
-//     }
-// }
-
 void *gestionar_epoll(void *arg) {
     struct epoll_event events[MAX_EV_EPOLL];
 
@@ -149,7 +93,8 @@ void *gestionar_epoll(void *arg) {
             int eventFd = contexto->fd;
 
             if (eventFd == timerSocket) {
-                manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo);
+                manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo,
+                              PUERTO_TCP);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
                                      contexto, EPOLL_CTL_MOD);
             } else if (eventFd == udpSocket) {
@@ -219,13 +164,14 @@ int main() {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo);
+    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo, PUERTO_TCP);
     agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, ctxUdp,
                          EPOLL_CTL_ADD);
     sleep(2);
     printf("Empiezo a escuchar peticiones en los listen sockets\n");
     agregar_socket_epoll(epollFd, socketEscuchaPublica, EPOLLIN, ctxPublico,
                          EPOLL_CTL_ADD);
+    debug(1);
     agregar_socket_epoll(epollFd, socketEscuchaLocal, EPOLLIN, ctxLocal,
                          EPOLL_CTL_ADD);
 

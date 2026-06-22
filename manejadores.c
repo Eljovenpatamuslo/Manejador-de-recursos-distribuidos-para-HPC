@@ -1,6 +1,6 @@
 #include "manejadores.h"
 
-#define debug(i) fprintf(stderr, "HOLA: %d\n", i);
+#define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 
 int enviar_formateado(int fd, const char *formato, ...);
 
@@ -26,7 +26,32 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             int erlangFd, int epollFd) {
 
     if (cliente->tipo == CONEXION_SALIENTE) {
+        debug("10");
+
+        // 1. Preguntamos el estado real de la conexión asíncrona
+        int error = 0;
+        socklen_t len = sizeof(error);
+        if (getsockopt(cliente->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+            perror("getsockopt falló");
+            return 1; // Retornamos 1 para que tu bucle de epoll lo cierre y
+                      // libere
+        }
+
+        // 2. Evaluamos si el connect() de fondo falló
+        if (error != 0) {
+            fprintf(stderr,
+                    "[WARN] Fallo al conectar con la IP %s. Razón: %s\n",
+                    cliente->ip,
+                    strerror(error)); // Como no se pudo conectar, abortamos.
+            // Al devolver 1, tu código principal hace close() y free()
+            // automáticamente.
+            return 1;
+        }
+
+        // 3. Si llegamos acá, la conexión es 100% exitosa.
         enviar_formateado(cliente->fd, cliente->mensaje);
+
+        // Lo pasamos a modo escucha de respuesta
         cliente->tipo = CLIENTE_AGENTE_C;
 
         return 0;
@@ -283,7 +308,8 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                        ip, recurso, cantidad);
 
                 DatosNodo *datos = tablanodos_buscar(tablaNodos, ip);
-
+                debug(ip);
+                printf("puerto: %d", datos->puerto);
                 int fdSalida =
                     crear_socket_saliente_nobloqueante(ip, datos->puerto);
 
@@ -320,14 +346,9 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
     else if (strncmp(mensaje, "GET_NODES", 9) == 0) {
         printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
                cliente->fd);
-        debug(1);
         tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
-        debug(2);
         char *nodos = tablanodos_obtener_nodos(tablaNodos);
-        debug(3);
         enviar_formateado(cliente->fd, "%s", nodos);
-        debug(4);
-
     }
 
     else if (strncmp(mensaje, "JOB_RELEASE", 12) == 0) {
@@ -377,17 +398,18 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
 }
 
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
-                   RecursosNodo recNodo) {
+                   RecursosNodo recNodo, int puertoTcpEscucha) {
     // Vacio el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
-    anuncio_broadcast(udp_sock, puerto_udp, recNodo);
+    anuncio_broadcast(udp_sock, puerto_udp, recNodo, puertoTcpEscucha);
 }
 
-void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo) {
+void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo,
+                       int puertoTcpEscucha) {
     char mensaje_anuncio[256];
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puerto_udp,
+             "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puertoTcpEscucha,
              recNodo->cpu->cantDisp, recNodo->mem->cantDisp,
              recNodo->gpu->cantDisp);
 
