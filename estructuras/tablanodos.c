@@ -207,7 +207,7 @@ DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]) {
     return dato;
 }
 
-char* tablanodos_obtener_nodos(TablaNodos tabla) {
+char *tablanodos_obtener_nodos(TablaNodos tabla) {
     assert(tabla != NULL);
 
     pthread_mutex_lock(&tabla->mutex);
@@ -215,7 +215,7 @@ char* tablanodos_obtener_nodos(TablaNodos tabla) {
     // Si la tabla está vacía, retornamos un string vacío
     if (tabla->primerNodo == NULL) {
         pthread_mutex_unlock(&tabla->mutex);
-        return strdup(""); 
+        return strdup("");
     }
 
     size_t tamanoTotal = 0;
@@ -226,10 +226,11 @@ char* tablanodos_obtener_nodos(TablaNodos tabla) {
         // Calculamos el tamaño aproximado de la línea para este nodo
         // Ejemplo formato: "192.168.1.10:8100:cpu:4:mem:8192:gpu:1"
         // Agregamos un margen extra de caracteres fijos por cada línea
-        tamanoTotal += strlen(actual->datos->ip) + strlen(actual->datos->recursos) + 20;
+        tamanoTotal +=
+            strlen(actual->datos->ip) + strlen(actual->datos->recursos) + 20;
         actual = actual->sigLista;
     }
-    
+
     // Sumamos 1 byte para el carácter nulo terminal '\0'
     tamanoTotal += 1;
 
@@ -240,7 +241,7 @@ char* tablanodos_obtener_nodos(TablaNodos tabla) {
         pthread_mutex_unlock(&tabla->mutex);
         return NULL;
     }
-    
+
     // Inicializamos el string vacío
     resultado[0] = '\0';
 
@@ -250,10 +251,8 @@ char* tablanodos_obtener_nodos(TablaNodos tabla) {
 
     while (actual != NULL) {
         // Estructuramos la información del nodo actual en el búfer temporal
-        snprintf(bufferLinea, sizeof(bufferLinea),
-                 "%s:%u:%s",
-                 actual->datos->ip,
-                 actual->datos->puerto,
+        snprintf(bufferLinea, sizeof(bufferLinea), "%s:%u:%s",
+                 actual->datos->ip, actual->datos->puerto,
                  actual->datos->recursos);
 
         strcat(resultado, bufferLinea);
