@@ -1,48 +1,12 @@
 ---Log del scheduler de erlang---
-send_recv_manager iniciado 
-Erlang se conecto al nodo local
-send_recv_manager iniciado 
-job_server iniciado
-[Job 66] Solicitando los recursos: "@127.0.0.1:9000:cpu:2 @127.0.0.1:9000:gpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
-[Job 66] EXITO! Todos los recursos concedidos.
-[Job 66] Ejecutando procesamiento en el cluster simulado...
-[Job 98] ALERTA: job denegado ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"). Iniciando aborto...
-[Job 98] Respetando backoff de 409 ms para mitigar contención.
-[Job 98] Reiniciando ciclo de peticiones (Intento 1).
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
-[Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048").
-[Job 98] Respetando backoff de 653 ms para mitigar contención.
-[Job 98] Reiniciando ciclo de peticiones (Intento 2).
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
-[Job 98] EXITO! Todos los recursos concedidos.
-[Job 98] Ejecutando procesamiento en el cluster simulado...
-[Job 66] Procesamiento completado. Liberando infraestructura.
-[Job 66] Terminado correctamente.
-[Job 98] Procesamiento completado. Liberando infraestructura.
-[Job 98] Terminado correctamente.
----Log del scheduler de erlang---
-send_recv_manager iniciado 
-Erlang se conecto al nodo local
-send_recv_manager iniciado 
-job_server iniciado
-[Job 66] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:gpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1"
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
-[Job 130] Solicitando los recursos: "@127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:3072 "
-[Job 66] EXITO! Todos los recursos concedidos.
-[Job 66] Ejecutando procesamiento en el cluster simulado...
-[Job 98] ALERTA: job denegado ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"). Iniciando aborto...
-[Job 98] Respetando backoff de 357 ms para mitigar contención.
-[Job 98] Reiniciando ciclo de peticiones (Intento 1).
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
-[Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024").
-[Job 98] Respetando backoff de 656 ms para mitigar contención.
-[Job 98] Reiniciando ciclo de peticiones (Intento 2).
-[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
-[Job 98] EXITO! Todos los recursos concedidos.
-[Job 98] Ejecutando procesamiento en el cluster simulado...
-[Job 66] Procesamiento completado. Liberando infraestructura.
-[Job 66] Terminado correctamente.
-[Job 98] Procesamiento completado. Liberando infraestructura.
-[Job 98] Terminado correctamente.
-Error al recibir mensaje del nodo, razon:timeout 
+fecha: [{2026,6,22}] hora: [{14,46,37}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
