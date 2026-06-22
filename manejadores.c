@@ -28,30 +28,22 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
     if (cliente->tipo == CONEXION_SALIENTE) {
         debug("10");
 
-        // 1. Preguntamos el estado real de la conexión asíncrona
         int error = 0;
         socklen_t len = sizeof(error);
         if (getsockopt(cliente->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
             perror("getsockopt falló");
-            return 1; // Retornamos 1 para que tu bucle de epoll lo cierre y
-                      // libere
-        }
-
-        // 2. Evaluamos si el connect() de fondo falló
-        if (error != 0) {
-            fprintf(stderr,
-                    "[WARN] Fallo al conectar con la IP %s. Razón: %s\n",
-                    cliente->ip,
-                    strerror(error)); // Como no se pudo conectar, abortamos.
-            // Al devolver 1, tu código principal hace close() y free()
-            // automáticamente.
             return 1;
         }
 
-        // 3. Si llegamos acá, la conexión es 100% exitosa.
+        if (error != 0) {
+            fprintf(stderr,
+                    "[WARN] Fallo al conectar con la IP %s. Razón: %s\n",
+                    cliente->ip, strerror(error));
+            return 1;
+        }
+
         enviar_formateado(cliente->fd, cliente->mensaje);
 
-        // Lo pasamos a modo escucha de respuesta
         cliente->tipo = CLIENTE_AGENTE_C;
 
         return 0;
@@ -254,7 +246,9 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 }
 
 void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
+    debug("ENTRO");
     ListaResultados lista = tablajobs_release_job(tablaJobs, jobId);
+    debug("SALGO");
     struct _NodoResultado *actual = lista;
 
     while (actual != NULL) {
@@ -272,7 +266,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
         } else {
             continue;
         }
-
+        debug("LIB");
         int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
         enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
 
@@ -281,6 +275,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
 
         actual = actual->sig;
     }
+    debug("LIB1");
 }
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
@@ -351,7 +346,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         enviar_formateado(cliente->fd, "%s", nodos);
     }
 
-    else if (strncmp(mensaje, "JOB_RELEASE", 12) == 0) {
+    else if (strncmp(mensaje, "JOB_RELEASE", 11) == 0) {
         unsigned long jobId;
         if (sscanf(mensaje, "JOB_RELEASE %lu", &jobId) == 1) {
             printf("[ERLANG %d] Planificador notifica fin de Job ID: %lu\n",
