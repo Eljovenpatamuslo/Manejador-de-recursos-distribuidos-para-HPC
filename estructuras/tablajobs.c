@@ -217,13 +217,14 @@ int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId) {
 }
 
 void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino) {
+                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, int fd) {
     
     DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
     assert(nuevosDatos != NULL);
     
     nuevosDatos->jobId = jobId;
     nuevosDatos->rol = JOB_LOCAL;
+    nuevosDatos->fd = fd;
     strncpy(nuevosDatos->nodoIp, ipDestino, 16);
     nuevosDatos->nodoPuerto = puertoDestino;
     
