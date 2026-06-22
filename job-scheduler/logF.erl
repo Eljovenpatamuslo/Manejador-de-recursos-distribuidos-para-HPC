@@ -1,21 +1,31 @@
 -module(logF).
--export([cerrar/0,cerrar_todo/0,log/1,log/2]).
+-export([log/2,log/3,crear_error_managment/0,logServer/0]).
 %hacer logserver
 
-cerrar() ->
+crear_error_managment() ->
+    Pid = spawn_link(?MODULE,logServer,[]),
+    register(log,Pid),
+
+    log(msg,"---Log del scheduler de erlang---~n"),
+    ok.
+
+logServer() ->
     receive
-        close -> 
-            send_recv_manager:cerrar_send_manager()
+        {msg,Msg,Args} ->
+            ok = io:fwrite(Msg,Args),
+            Str = io_lib:format(Msg,Args),
+            file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]),
+            logServer();
+        {fatal,Msg,Args} ->
+            ok = io:fwrite(Msg,Args),
+            Str = io_lib:format(Msg,Args),
+            file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]),
+            exit(fatal)
     end.
 
-cerrar_todo() ->
-    cerrar_todo ! close.
+log(Type,Msg) ->
+    log ! {Type,Msg,[]}.
+    
 
-log(Msg) ->
-    ok = io:fwrite(Msg),
-    file:write_file("logErl.txt",[Msg ++ "\n"],[append]).
-
-log(Msg,Args) ->
-    ok = io:fwrite(Msg,Args),
-    Str = io_lib:format(Msg,Args),
-    file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]).
+log(Type,Msg,Args) ->
+    log ! {Type,Msg,Args}.

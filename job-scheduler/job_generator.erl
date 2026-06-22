@@ -1,8 +1,10 @@
 -module(job_generator).
--compile(export_all).
+
+-export([obtener_recursos_para_jobs/1]).
 
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
+
 
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
 obtener_recursos_para_jobs(ParsedNodes) ->

@@ -1,7 +1,7 @@
 %forma de mandarle los datos
 % [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
 
-%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
+% ejemplo: NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
 
 -module(job_server).
 
@@ -13,15 +13,19 @@
 -define(TIMEOUT, 1000 * ?SEC).
 
 iniciar_job_server() ->
-    ServerPid = spawn(?MODULE,job_server,[maps:new()]),
+    ServerPid = spawn_link(?MODULE,job_server,[maps:new()]),
     register(job_server,ServerPid),
     ok.
 
 job_server(JobMap) ->
     receive
         {find,JobAction, JobId} -> 
-            JobPid = maps:get(JobId,JobMap),
-            JobPid ! JobAction,
+            JobPid = maps:get(JobId,JobMap,-1),
+            case JobPid of
+                -1 -> logF:log(msg,"No existe job asociado a la JobId:~p ~n",[JobId]);
+
+                JobPid -> JobPid ! JobAction
+            end,
             job_server(JobMap);
         {add,JobPid,JobId} -> 
             NewMap = maps:put(JobId,JobPid,JobMap),
@@ -35,8 +39,8 @@ job_server(JobMap) ->
                 _ -> jobdone 
             end,    
             job_server(NewMap);
-        close -> close;
-        _ -> inesperado
+        _ -> logF:log(msg,"solicitud: [~p] inesperada ~n"),
+            job_server(JobMap)
     end.
 
 crear_job(Resource) -> 
@@ -45,35 +49,35 @@ crear_job(Resource) ->
     job_server ! {add,JobPid,JobId}.
 
 execute_payload(JobId) ->
-    logF:log("[Job ~p] Ejecutando procesamiento en el cluster simulado...~n", [JobId]),
+    logF:log(msg,"[Job ~p] Ejecutando procesamiento en el cluster simulado...~n", [JobId]),
     timer:sleep(5 * ?SEC),
     
-    logF:log("[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
+    logF:log(msg,"[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
     send_manager ! {jobRelease,JobId},
     job_server ! {remove,JobId},
-    logF:log("[Job ~p] Terminado correctamente.~n", [JobId]),
+    logF:log(msg,"[Job ~p] Terminado correctamente.~n", [JobId]),
     ok.
 
 acquire_loop(JobId, Recursos, Intentos) ->
-    logF:log("[Job ~p] Solicitando los recursos: ~p~n", [JobId, Recursos]),
+    logF:log(msg,"[Job ~p] Solicitando los recursos: ~p~n", [JobId, Recursos]),
     
     send_recv_manager:enviar_send({jobRequest, JobId, Recursos}),
     
     receive
         jobGranted -> 
-           logF:log("[Job ~p] EXITO! Todos los recursos concedidos.~n", [JobId]),
+           logF:log(msg,"[Job ~p] EXITO! Todos los recursos concedidos.~n", [JobId]),
             execute_payload(JobId);
             
         jobDenied ->
-            logF:log("[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", [JobId, Recursos]),
+            logF:log(msg,"[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", [JobId, Recursos]),
             handle_failure(JobId, Recursos, Intentos);
             
         jobTimeout ->
-            logF:log("[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", [JobId, Recursos]),
+            logF:log(msg,"[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", [JobId, Recursos]),
             handle_failure(JobId, Recursos, Intentos);
         closed -> closed
     after ?TIMEOUT ->
-        logF:log("[Job ~p] ERROR CRITICO: Timeout interno del planificador.~n", [JobId]),
+        logF:log(msg,"[Job ~p] ERROR CRITICO: Timeout interno del planificador.~n", [JobId]),
         handle_failure(JobId, Recursos, Intentos)
     end.
 
@@ -83,7 +87,7 @@ handle_failure(JobId, Recursos, Intentos) ->
     aplicar_timeout(JobId, SiguienteIntento),
     
     %% 2. Reiniciar la máquina de estados desde la lista original limpia
-    logF:log("[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, SiguienteIntento]),
+    logF:log(msg,"[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, SiguienteIntento]),
     acquire_loop(JobId, Recursos, SiguienteIntento).
 
 
@@ -97,7 +101,7 @@ aplicar_timeout(JobId, Intentos) ->
     Jitter = rand:uniform(300), 
     
     TiempoTotalSleep = TiempoExponensial + Jitter,
-    logF:log("[Job ~p] Respetando backoff de ~p ms para mitigar contención.~n", [JobId, TiempoTotalSleep]),
+    logF:log(msg,"[Job ~p] Respetando backoff de ~p ms para mitigar contención.~n", [JobId, TiempoTotalSleep]),
     timer:sleep(TiempoTotalSleep).
 
 enviar_estado_job(Status,JobId) ->

@@ -1,11 +1,11 @@
 %forma de mandarle los datos
 % [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
 
-%NODES "192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096"
+%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
 
 -module(job_scheduler).
 
--export([scheduler_init/0,format_nodes/1,
+-export([scheduler_init/1,format_nodes/1,
     obtener_y_formatear_nodos/0,scheduler/0,get_pid_scheduler/0]).
 -define(SEC, 1000).
 -define(TIME_BEFORE_DOING_MORE_JOBS, 10* ?SEC).
@@ -13,15 +13,18 @@
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
 
-scheduler_init() ->
-    logF:log("---Log del scheduler de erlang---"),
+scheduler_init(PuertoC) ->
+    ok = logF:crear_error_managment(),
+    logF:log(msg,"send_recv_manager iniciado ~n"),
+    
+    ok = send_recv_manager:send_recv_init(PuertoC),
+    logF:log(msg,"send_recv_manager iniciado ~n"),
 
-    send_recv_manager:send_recv_init(),
+    ok = job_server:iniciar_job_server(),
+    logF:log(msg,"job_server iniciado~n"),
 
-    job_server:iniciar_job_server(),
-
-    ManagerPid = spawn(?MODULE,scheduler,[]),
-    register(scheduler,ManagerPid).
+    register(scheduler,self()),
+    scheduler().
 
 format_nodes([Node]) -> 
     case string:lexemes(Node,":") of
@@ -36,6 +39,7 @@ format_nodes([Node]) ->
             [{Direccion,Recursos}];
 
         _ -> logF:log("Error: el orden de la solicitud de recursos no es compatible")
+        
     end;
 
 format_nodes([Node | Nodes]) ->

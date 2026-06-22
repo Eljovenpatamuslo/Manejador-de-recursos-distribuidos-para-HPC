@@ -5,32 +5,42 @@
 
 -module(send_recv_manager).
 
--export([send_recv_init/0,conectarse_a_nodo_local/0,esperar_respuesta_nodo/1,
-    send_manager/1,obtener_nodos/0,enviar_send/1,cerrar_send_manager/0]).
+-export([send_recv_init/1,conectarse_a_nodo_local/2,esperar_respuesta_nodo/1,
+    send_manager/1,obtener_nodos/0,enviar_send/1]).
 
--define(PUERTOC, 3947). %usar 12000
+%usar puerto 12000
 -define(HOST, "localhost").
 -define(CONFIGCONNECT, [{active,false},{packet,0}]).
+-define(INTENTOS, 10).
+-define(SEC, 1000).
+-define(TIMEOUT, 60 * ?SEC).
 
-send_recv_init() ->
-    {ok, SockC} = conectarse_a_nodo_local(),
-    SendPid = spawn(?MODULE,send_manager,[SockC]),
+send_recv_init(PuertoC) ->
+    {ok, SockC} = conectarse_a_nodo_local(PuertoC,?INTENTOS),
+    register(sockC,SockC),
+
+    SendPid = spawn_link(?MODULE,send_manager,[SockC]),
     register(send_manager,SendPid),
-    RecvPid = spawn(?MODULE,esperar_respuesta_nodo,[SockC]),
-    register(esperar_respuesta_nodo,RecvPid).
 
-conectarse_a_nodo_local() ->
-    case gen_tcp:connect(?HOST,?PUERTOC,?CONFIGCONNECT) of
+    RecvPid = spawn_link(?MODULE,esperar_respuesta_nodo,[SockC]),
+    register(esperar_respuesta_nodo,RecvPid),
+
+    ok.
+
+conectarse_a_nodo_local(_,0) ->
+    logF:log(fatal,"Se acabaron los intentos, no se pudo establecer coneccion con nodo local~n");
+conectarse_a_nodo_local(PuertoC,Intentos) ->
+    case gen_tcp:connect(?HOST,PuertoC,?CONFIGCONNECT) of
         {ok,SockC} -> 
-            logF:log("Erlang se conecto al nodo local"),
+            logF:log(msg,"Erlang se conecto al nodo local~n"),
             {ok,SockC};
         {error,Razon} -> 
-            logF:log("Error al conectarse al nodo, razon:~p ~n",[Razon]),
-            logF:cerrar_todo()
+            logF:log(msg,"Error al conectarse al nodo, razon:~p , intentando otra vez...~n",[Razon]),
+            conectarse_a_nodo_local(PuertoC,Intentos-1)
     end.
 
 esperar_respuesta_nodo(SockC) ->
-    case gen_tcp:recv(SockC, 0) of     
+    case gen_tcp:recv(SockC, 0,?TIMEOUT) of     
         {ok, "JOB_GRANTED "++ JobIdn} -> 
             JobId = list_to_integer(string:reverse(string:prefix(string:reverse(JobIdn),"\n"))),
             job_server:enviar_estado_job(jobGranted,JobId),
@@ -53,12 +63,11 @@ esperar_respuesta_nodo(SockC) ->
 
             esperar_respuesta_nodo(SockC);
         {error,Razon} -> 
-            logF:log("Error al recibir mensaje del nodo, razon:~p ~n",[Razon]),
-            logF:cerrar_todo();
+            logF:log(fatal,"Error al recibir mensaje del nodo, razon:~p ~n",[Razon]);
 
         M -> 
-            logF:log("Error, mensaje: ~p inesperado ~n",[M]),
-            logF:cerrar_todo()
+            logF:log(msg,"Error, mensaje: ~p inesperado ~n",[M]),
+            esperar_respuesta_nodo(SockC)
     end.
 
 send_manager(SockC) ->
@@ -69,7 +78,8 @@ send_manager(SockC) ->
                 ok -> 
                     ok;
                 {error,Razon} -> 
-                    logF:log("Error al enviar JOB_RELEASE, razon: ~p ~n",[Razon])
+                    logF:log(msg,"Error al enviar JOB_RELEASE, razon: ~p ~n",[Razon]),
+                    send_manager(SockC)
             end;
 
         {jobRequest, JobId, Recursos} ->
@@ -77,20 +87,19 @@ send_manager(SockC) ->
             case gen_tcp:send(SockC, JOB_REQUEST) of
                 ok -> ok;
                 {error,Razon} -> 
-                    logF:log("Error al enviar JOB_REQUEST, razon: ~p ~n",[Razon])
+                    logF:log(msg,"Error al enviar JOB_REQUEST, razon: ~p ~n",[Razon]),
+                    send_manager(SockC)
             end;
         getNodes -> 
             case gen_tcp:send(SockC, "GET_NODES\n") of
                 ok -> ok;
                 {error,Razon} -> 
-                    logF:log("Error al enviar GET_NODES, razon: ~p ~n",[Razon])
+                    logF:log(msg,"Error al enviar GET_NODES, razon: ~p ~n",[Razon]),
+                    send_manager(SockC)
             end;
-        close ->
-            logF:log("Cerrando: ~p ~n",[?FUNCTION_NAME]),
-            logF:cerrar_todo(); %haceralgo
         M ->
-            logF:log("Error, mensaje: ~p inesperado ~n",[M]),
-            logF:cerrar_todo()
+            logF:log(msg,"Error, mensaje: ~p inesperado ~n",[M]),
+            send_manager(SockC)
     end,
     send_manager(SockC).
 
@@ -99,15 +108,12 @@ obtener_nodos() ->
     receive
         {ok,Nodos} -> {ok,Nodos};
         {error,Razon} -> 
-            logF:log("No se pudo obtener los nodos, razon:~p ~n",[Razon]),
+            logF:log(msg,"No se pudo obtener los nodos, razon:~p ~n",[Razon]),
             {error,Razon};
         M ->
-            logF:log("Error, mensaje: ~p inesperado ~n",[M]),
+            logF:log(msg,"Error, mensaje: ~p inesperado ~n",[M]),
             logF:cerrar_todo()
     end.
 
 enviar_send(Msg) ->
     send_manager ! Msg.
-
-cerrar_send_manager() ->
-    send_manager ! close.
