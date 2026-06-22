@@ -1,9 +1,5 @@
 #include "manejadores.h"
-#include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
-#include "estructuras/tablanodos.h"
-#include "sockets.h"
-#include <string.h>
 
 int enviar_formateado(int fd, const char *formato, ...);
 
@@ -15,9 +11,11 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
 
     nuevoCliente->tipo = tipo;
 
-    strncpy(nuevoCliente->ip, ip, INET_ADDRSTRLEN);
+    if (ip != NULL)
+        strncpy(nuevoCliente->ip, ip, INET_ADDRSTRLEN);
 
-    strncpy(nuevoCliente->mensaje, mensaje, 256);
+    if (mensaje != NULL)
+        strncpy(nuevoCliente->mensaje, mensaje, 256);
 
     return nuevoCliente;
 }
@@ -67,7 +65,7 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                              tablaNodos, erlangFd);
         } else {
             manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs,
-                                   tablaNodos, epollFd);
+                                   tablaNodos, epollFd, recNodo);
         }
 
         int bytes_sobrantes = cliente->bytes_in_buffer - (longitud_mensaje + 1);
@@ -187,6 +185,10 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Concedio GRANTED: Job=%lu\n", cliente->fd,
                    jobId);
 
+            DatosNodo datos = tablanodos_buscar(tablaNodos, cliente->ip);
+            // tablajobs_recurso_granted(tablaJobs, jobId, cliente->ip,
+            //                           datos->puerto);
+
             if (tablajobs_job_granted(tablaJobs, jobId)) {
                 enviar_formateado(erlangFd, "JOB_GRANTED %lu\n", jobId);
             }
@@ -241,8 +243,9 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
             continue;
         }
 
-        enviar_formateado(actual->fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
-        close(actual->fd);
+        enviar_formateado(actual->datos->fd, "RELEASE %lu %s %d\n", jobId, rec,
+                          cant);
+        close(actual->datos->fd);
 
         actual = actual->sig;
     }
@@ -250,7 +253,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int epollFd) {
+                            int epollFd, RecursosNodo recNodo) {
 
     if (strncmp(mensaje, "JOB_REQUEST", 11) == 0) {
         unsigned long jobId;
@@ -266,19 +269,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             char recurso[16];
             int cantidad;
             int bytes_leidos;
-
-            // Desglose del formato " @%15[^:]:%15[^:]:%d%n":
-            // [Espacio] : Ignora cualquier cantidad de espacios o tabs antes
-            // del @
-            // @         : Espera el símbolo literal @
-            // %15[^:]   : Lee hasta 15 caracteres que NO sean ':' (lo guarda en
-            // host)
-            // :         : Espera los dos puntos literales
-            // %15[^:]   : Lee hasta 15 caracteres que NO sean ':' (lo guarda en
-            // recurso)
-            // :         : Espera los dos puntos literales
-            // %d        : Lee el entero (cantidad)
-            // %n        : Guarda cuántos caracteres ocupó este bloque entero
 
             while (sscanf(ptr, " @%15[^:]:%15[^:]:%d%n", ip, recurso, &cantidad,
                           &bytes_leidos) == 3) {
@@ -305,14 +295,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                 agregar_socket_epoll(epollFd, fdSalida, EPOLLOUT | EPOLLONESHOT,
                                      nueva_conexion, EPOLL_CTL_ADD);
 
-                // TODO Lógica:
-                // - Guardar en tu tabla del Job que requiere 'cantidad' de
-                // 'recurso' en 'host'.
-                // - Si host es tu propia IP (o 127.0.0.1), reservas
-                // localmente.
-                // - Si es otra IP, lo encolas para enviar un RESERVE a ese
-                // Agente C.
-
                 ptr += bytes_leidos;
             }
 
@@ -332,6 +314,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         printf("[ERLANG %d] Solicito la lista de nodos activos descubiertos\n",
                cliente->fd);
 
+        tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
         enviar_formateado(cliente->fd, "%s",
                           tablanodos_obtener_nodos(tablaNodos));
 
@@ -344,10 +327,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                    cliente->fd, jobId);
 
             liberar_job(tablaJobs, jobId);
-            // TODO Lógica:
-            // - Liberar los recursos locales asociados a este jobId.
-            // - Enviar los comandos "RELEASE" correspondientes a los agentes C
-            //   remotos que hayan prestado recursos para este trabajo.
         }
     }
 }
@@ -387,17 +366,20 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
     }
 }
 
-void manejar_timer(int timerSocket, int udp_sock, int puerto_udp) {
-    // Vacío el timerfd para que epoll no siga notificando
+void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
+                   RecursosNodo recNodo) {
+    // Vacio el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
-    anuncio_broadcast(udp_sock, puerto_udp);
+    anuncio_broadcast(udp_sock, puerto_udp, recNodo);
 }
 
-void anuncio_broadcast(int udp_sock, int puerto_udp) {
+void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo) {
     char mensaje_anuncio[256];
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE 12000 cpu:4 mem:4096 gpu:0\n");
+             "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puerto_udp,
+             recNodo->cpu->cantDisp, recNodo->mem->cantDisp,
+             recNodo->gpu->cantDisp);
 
     struct sockaddr_in dest_addr;
     memset(&dest_addr, 0, sizeof(dest_addr));

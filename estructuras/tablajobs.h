@@ -84,8 +84,10 @@ unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
 
 int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 
-void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, int fd);
+void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
+                                TipoRecurso rec, unsigned long cant,
+                                const char *ipDestino,
+                                unsigned short puertoDestino, int fd);
 
 void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId,
                                TipoRecurso rec, char ip[],

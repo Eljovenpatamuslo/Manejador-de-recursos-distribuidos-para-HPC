@@ -1,6 +1,7 @@
 #include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
 #include "estructuras/tablanodos.h"
+#include "sockets.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -41,10 +42,11 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int epollFd);
+                            int epollFd, RecursosNodo recNodo);
 
-void manejar_timer(int timerSocket, int udp_sock, int puerto_udp);
+void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
+                   RecursosNodo recNodo);
 
 void registrar_nodo(int udp_sock, TablaNodos tablaNodos);
 
-void anuncio_broadcast(int udp_sock, int puerto_udp);
+void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo);

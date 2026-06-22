@@ -62,7 +62,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
         pthread_mutex_unlock(&recurso->mutex);
         return 1; // El recurso se reservo correctamente GRANTED
 
-    } else {
+    } else if (recurso->capacidad >= cant) {
 
         Solicitud nuevaSolicitud = malloc(sizeof(struct _Solicitud));
         assert(nuevaSolicitud != NULL);

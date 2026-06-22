@@ -73,52 +73,105 @@ static int aceptar_listen_sock_epoll(int eventFd) {
     return 0;
 }
 
+// void *gestionar_epoll(void *arg) {
+//     struct epoll_event events[MAX_EV_EPOLL];
+//     struct epoll_event ev;
+//
+//     for (int numFds, n;;) {
+//         numFds = epoll_wait(epollFd, events, MAX_EV_EPOLL, -1);
+//
+//         if (numFds == -1)
+//             perror("epoll_wait");
+//
+//         for (n = 0; n < numFds; ++n) {
+//             int eventFd = events[n].data.fd;
+//
+//             if (eventFd == timerSocket) {
+//                 // Debo anunciarme
+//                 manejar_timer(timerSocket, udpSocket, PUERTO_UDP);
+//                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN |
+//                 EPOLLONESHOT,
+//                                      NULL, EPOLL_CTL_MOD);
+//             }
+//
+//             else if (eventFd == udpSocket) {
+//                 // Anuncio de otro nodo
+//                 registrar_nodo(udpSocket, tablaNodos);
+//                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN |
+//                 EPOLLONESHOT,
+//                                      NULL, EPOLL_CTL_MOD);
+//             }
+//
+//             else if (eventFd == socketEscuchaLocal ||
+//                      eventFd == socketEscuchaPublica) {
+//                 if (aceptar_listen_sock_epoll(eventFd) == 1)
+//                     continue;
+//             }
+//
+//             else {
+//                 ClienteConexion *cliente =
+//                     (ClienteConexion *)events[n].data.ptr;
+//
+//                 int sockClosed = leer_y_procesar_cliente(
+//                     cliente, recNodo, tablaJobs, tablaNodos, erlangFd,
+//                     epollFd);
+//
+//                 if (sockClosed) {
+//                     close(cliente->fd);
+//                     free(cliente);
+//                 } else {
+//                     agregar_socket_epoll(epollFd, cliente->fd,
+//                                          EPOLLIN | EPOLLONESHOT, cliente,
+//                                          EPOLL_CTL_MOD);
+//                 }
+//             }
+//         }
+//     }
+// }
+
 void *gestionar_epoll(void *arg) {
     struct epoll_event events[MAX_EV_EPOLL];
-    struct epoll_event ev;
 
-    for (int numFds, n;;) {
-        numFds = epoll_wait(epollFd, events, MAX_EV_EPOLL, -1);
-
-        if (numFds == -1)
+    for (;;) {
+        int numFds = epoll_wait(epollFd, events, MAX_EV_EPOLL, -1);
+        if (numFds == -1) {
+            if (errno == EINTR)
+                continue;
             perror("epoll_wait");
+        }
 
-        for (n = 0; n < numFds; ++n) {
-            int eventFd = events[n].data.fd;
+        for (int n = 0; n < numFds; ++n) {
+            // Extaer el puntero directamente de forma segura
+            ClienteConexion *contexto = (ClienteConexion *)events[n].data.ptr;
+            if (contexto == NULL)
+                continue;
+
+            int eventFd = contexto->fd;
 
             if (eventFd == timerSocket) {
-                // Debo anunciarme
-                manejar_timer(timerSocket, udpSocket, PUERTO_UDP);
+                manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
-                                     NULL, EPOLL_CTL_MOD);
-            }
-
-            else if (eventFd == udpSocket) {
-                // Anuncio de otro nodo
+                                     contexto, EPOLL_CTL_MOD);
+            } else if (eventFd == udpSocket) {
                 registrar_nodo(udpSocket, tablaNodos);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
-                                     NULL, EPOLL_CTL_MOD);
-            }
-
-            else if (eventFd == socketEscuchaLocal ||
-                     eventFd == socketEscuchaPublica) {
-                if (aceptar_listen_sock_epoll(eventFd) == 1)
-                    continue;
-            }
-
-            else {
-                ClienteConexion *cliente =
-                    (ClienteConexion *)events[n].data.ptr;
-
-                int sockClosed = leer_y_procesar_cliente(
-                    cliente, recNodo, tablaJobs, tablaNodos, erlangFd, epollFd);
+                                     contexto, EPOLL_CTL_MOD);
+            } else if (eventFd == socketEscuchaLocal ||
+                       eventFd == socketEscuchaPublica) {
+                aceptar_listen_sock_epoll(eventFd);
+                agregar_socket_epoll(epollFd, eventFd, EPOLLIN, contexto,
+                                     EPOLL_CTL_MOD);
+            } else {
+                int sockClosed =
+                    leer_y_procesar_cliente(contexto, recNodo, tablaJobs,
+                                            tablaNodos, erlangFd, epollFd);
 
                 if (sockClosed) {
-                    close(cliente->fd);
-                    free(cliente);
+                    close(contexto->fd);
+                    free(contexto);
                 } else {
-                    agregar_socket_epoll(epollFd, cliente->fd,
-                                         EPOLLIN | EPOLLONESHOT, cliente,
+                    agregar_socket_epoll(epollFd, contexto->fd,
+                                         EPOLLIN | EPOLLONESHOT, contexto,
                                          EPOLL_CTL_MOD);
                 }
             }
@@ -137,13 +190,22 @@ int main() {
     udpSocket = crear_socket_udp_broadcast(PUERTO_UDP);
     timerSocket = crear_timer_anuncio(5);
 
+    ClienteConexion *ctxTimer =
+        crear_cliente(timerSocket, CLIENTE_AGENTE_C, "127.0.0.1", NULL);
+    ClienteConexion *ctxUdp =
+        crear_cliente(udpSocket, CLIENTE_AGENTE_C, "0.0.0.0", NULL);
+    ClienteConexion *ctxPublico =
+        crear_cliente(socketEscuchaPublica, CLIENTE_AGENTE_C, PUBLIC_DIR, NULL);
+    ClienteConexion *ctxLocal =
+        crear_cliente(socketEscuchaLocal, CLIENTE_ERLANG, LOCAL_DIR, NULL);
+
     epollFd = epoll_create1(0);
     if (epollFd == -1) {
         perror("epoll_create1");
         exit(EXIT_FAILURE);
     }
 
-    agregar_socket_epoll(epollFd, timerSocket, EPOLLIN | EPOLLONESHOT, NULL,
+    agregar_socket_epoll(epollFd, timerSocket, EPOLLIN | EPOLLONESHOT, ctxTimer,
                          EPOLL_CTL_ADD);
 
     int nproc = cant_nucleos();
@@ -152,18 +214,19 @@ int main() {
 
     printf("Inicio del servidor. Espero dos segundos para escuchar anuncios de "
            "otros nodos\n");
+
     for (int i = 0; i < nproc; i++) {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    anuncio_broadcast(udpSocket, PUERTO_UDP);
-    agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, NULL,
+    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo);
+    agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, ctxUdp,
                          EPOLL_CTL_ADD);
     sleep(2);
     printf("Empiezo a escuchar peticiones en los listen sockets\n");
-    agregar_socket_epoll(epollFd, socketEscuchaPublica, EPOLLIN, NULL,
+    agregar_socket_epoll(epollFd, socketEscuchaPublica, EPOLLIN, ctxPublico,
                          EPOLL_CTL_ADD);
-    agregar_socket_epoll(epollFd, socketEscuchaLocal, EPOLLIN, NULL,
+    agregar_socket_epoll(epollFd, socketEscuchaLocal, EPOLLIN, ctxLocal,
                          EPOLL_CTL_ADD);
 
     pthread_join(id[0], NULL);
