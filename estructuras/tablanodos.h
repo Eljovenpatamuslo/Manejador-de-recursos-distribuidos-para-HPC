@@ -1,13 +1,13 @@
 #ifndef __TABLANODOS_H__
 #define __TABLANODOS_H__
 
+#include "tablajobs.h"
 #include <assert.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <pthread.h>
-#include "tablajobs.h"
 
 typedef struct _DatosNodo {
     char ip[16];
@@ -20,22 +20,22 @@ typedef struct _NodoActivo {
     time_t ultimoAnuncio;
 
     struct _NodoActivo *antHash;
-	struct _NodoActivo *sigHash;
+    struct _NodoActivo *sigHash;
 
-	struct _NodoActivo *antLista;
-	struct _NodoActivo *sigLista;
+    struct _NodoActivo *antLista;
+    struct _NodoActivo *sigLista;
 } NodoActivo;
 
 struct _TablaNodos {
     NodoActivo **nodos;
-	NodoActivo *primerNodo;
-	NodoActivo *ultimoNodo;
+    NodoActivo *primerNodo;
+    NodoActivo *ultimoNodo;
 
     unsigned numNodos;
     unsigned capacidad;
 
     pthread_mutex_t mutex;
-}; 
+};
 typedef struct _TablaNodos *TablaNodos;
 
 #define FACTORDECARGA 0.75
@@ -60,7 +60,8 @@ void tablanodos_insertar(TablaNodos tabla, DatosNodo *dato);
  * Borra todos los nodos que no se hayan anunciado nuevamente antes de que pase
  * el tiempo de expiración.
  */
-void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs, RecursosNodo recursos);
+void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs,
+                                 RecursosNodo recursos);
 
 /**
  * Duplica el tamaño de la tabla rehasheando todos los nodos.
@@ -71,8 +72,8 @@ void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 
 int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
-DatosNodo tablanodos_buscar(TablaNodos tabla, char ip[]);
+DatosNodo *tablanodos_buscar(TablaNodos tabla, char ip[]);
 
-char* tablanodos_obtener_nodos(TablaNodos tabla);
+char *tablanodos_obtener_nodos(TablaNodos tabla);
 
 #endif /* __TABLANODOS_H__ */

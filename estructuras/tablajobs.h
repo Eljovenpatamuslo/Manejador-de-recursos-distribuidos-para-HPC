@@ -1,24 +1,17 @@
 #ifndef __TABLAJOBS_H_
 #define __TABLAJOBS_H_
 
-#include <assert.h>
-#include <stdlib.h>
-#include <pthread.h>
 #include "utils.h"
+#include <assert.h>
+#include <pthread.h>
+#include <stdlib.h>
 
 #define MAX_JOBS 99991
 #define MAX_NODOS 503
 
-typedef enum {
-    CPU,
-    MEM,
-    GPU
-} TipoRecurso;
+typedef enum { CPU, MEM, GPU } TipoRecurso;
 
-typedef enum {
-    JOB_LOCAL,
-    JOB_REMOTO
-} RolJob;
+typedef enum { JOB_LOCAL, JOB_REMOTO } RolJob;
 
 struct _RecursosReservados {
     unsigned int cpu;
@@ -41,7 +34,7 @@ typedef struct _JobActivo {
     DatosJob *datos;
 
     struct _JobActivo *antJobId;
-    struct _JobActivo *sigJobId; 
+    struct _JobActivo *sigJobId;
 
     struct _JobActivo *antJobNodo;
     struct _JobActivo *sigJobNodo;
@@ -57,7 +50,7 @@ struct _TablaJobs {
 };
 typedef struct _TablaJobs *TablaJobs;
 
-struct _RecursosNodo; 
+struct _RecursosNodo;
 typedef struct _RecursosNodo *RecursosNodo;
 
 typedef struct _NodoResultado {
@@ -83,21 +76,27 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos);
 /**
  * Borra todos los jobs asociados a una misma ip y puerto (nodo).
  */
-void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[], unsigned short puerto, RecursosNodo recursos);
+void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
+                               unsigned short puerto, RecursosNodo recursos);
 
-unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId, TipoRecurso rec);
+unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
+                                       TipoRecurso rec);
 
 int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 
-void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, void *datosCliente);
+void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
+                                TipoRecurso rec, unsigned long cant,
+                                const char *ipDestino,
+                                unsigned short puertoDestino,
+                                void *datosCliente);
 
-void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[], unsigned short puerto);
+void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
+                               unsigned short puerto);
 
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
 
-void desconectar_job(TablaJobs tabla, JobActivo* job);
+void desconectar_job(TablaJobs tabla, JobActivo *job);
 
-void liberar_memoria_job(JobActivo* job);
+void liberar_memoria_job(JobActivo *job);
 
 #endif /* _TABLAJOBS_H_ */

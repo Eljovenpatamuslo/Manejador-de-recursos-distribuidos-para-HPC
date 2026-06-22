@@ -28,8 +28,9 @@ RecursosNodo inicializar_recursos_locales() {
     return recursos;
 }
 
-int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, void *datosCliente) {
+int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                     unsigned long jobId, TipoRecurso rec, unsigned long cant,
+                     char ip[], unsigned short puerto, void *datosCliente) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -47,10 +48,10 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
         DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
         assert(nuevosDatos != NULL);
-            
+
         nuevosDatos->jobId = jobId;
         nuevosDatos->rol = JOB_REMOTO;
-        nuevosDatos->datosCliente = datosCliente
+        nuevosDatos->datosCliente = datosCliente;
         strncpy(nuevosDatos->nodoIp, ip, 16);
         nuevosDatos->nodoPuerto = puerto;
         nuevosDatos->recReservados = inicializar_recursos_reservados(rec, cant);
@@ -65,7 +66,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
         Solicitud nuevaSolicitud = malloc(sizeof(struct _Solicitud));
         assert(nuevaSolicitud != NULL);
-        
+
         nuevaSolicitud->jobId = jobId;
         strncpy(nuevaSolicitud->ip, ip, 16);
         nuevaSolicitud->puerto = puerto;
@@ -76,26 +77,30 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
 
         pthread_mutex_unlock(&recurso->mutex);
         return 0; // La reserva se agrego a la cola de espera
-
     }
-    
+
     return -1; // La reserva supera la capacidad máxima del recurso DENIED
 }
 
-ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec) {
+ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
+                                unsigned long jobId, TipoRecurso rec) {
     Recurso recurso;
 
-    if (rec == CPU) recurso = nodo->cpu;
-    else if (rec == MEM) recurso = nodo->mem;
-    else recurso = nodo->gpu;
+    if (rec == CPU)
+        recurso = nodo->cpu;
+    else if (rec == MEM)
+        recurso = nodo->mem;
+    else
+        recurso = nodo->gpu;
 
-    unsigned long cantALiberar = tablajobs_restar_recurso(tablaJobs, jobId, rec);
+    unsigned long cantALiberar =
+        tablajobs_restar_recurso(tablaJobs, jobId, rec);
     if (cantALiberar == 0) {
         return NULL; // El job no tenía este recurso asignado
     }
 
     pthread_mutex_lock(&recurso->mutex);
-    
+
     recurso->cantDisp += cantALiberar;
 
     // Lista temporal de las reservas pendientes asignadas
@@ -103,7 +108,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
 
     while (!cola_es_vacia(recurso->solicitudPend)) {
         Solicitud solPendiente = (Solicitud)cola_inicio(recurso->solicitudPend);
-        
+
         if (recurso->cantDisp >= solPendiente->cant) {
             // Hay suficientes recursos para la primera solicitud
             cola_desencolar(recurso->solicitudPend);
@@ -116,7 +121,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
             char solIp[16];
             strncpy(solIp, solPendiente->ip, 16);
             unsigned short solPuerto = solPendiente->puerto;
-            
+
             free(solPendiente);
 
             DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
@@ -127,23 +132,26 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
             strncpy(nuevosDatos->nodoIp, solIp, 16);
             nuevosDatos->nodoPuerto = solPuerto;
 
-            nuevosDatos->recReservados = inicializar_recursos_reservados(rec, solCant);
-            nuevosDatos->recPedidos = inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recReservados =
+                inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recPedidos =
+                inicializar_recursos_reservados(rec, solCant);
 
             // Insertamos o actualizamos en la tabla general
             tablajobs_insertar(tablaJobs, nuevosDatos);
 
-            struct _NodoPromovido *nuevoNodo = malloc(sizeof(struct _NodoPromovido));
+            struct _NodoPromovido *nuevoNodo =
+                malloc(sizeof(struct _NodoPromovido));
             assert(nuevoNodo != NULL);
             nuevoNodo->jobId = solJobId;
             strncpy(nuevoNodo->ip, solIp, 16);
             nuevoNodo->puerto = solPuerto;
-            
+
             // Lo insertamos al principio de nuestra lista de promovidos
             nuevoNodo->sig = promovidosPrimero;
             promovidosPrimero = nuevoNodo;
         } else {
-            break; 
+            break;
         }
     }
 
@@ -152,7 +160,8 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
     return promovidosPrimero;
 }
 
-void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reservados) {
+void liberar_recursos_reservados(RecursosNodo recursos,
+                                 RecursosReservados reservados) {
     pthread_mutex_lock(&recursos->cpu->mutex);
     recursos->cpu->cantDisp += reservados->cpu;
     pthread_mutex_unlock(&recursos->cpu->mutex);
@@ -166,7 +175,8 @@ void liberar_recursos_reservados(RecursosNodo recursos, RecursosReservados reser
     pthread_mutex_unlock(&recursos->gpu->mutex);
 }
 
-RecursosReservados inicializar_recursos_reservados(TipoRecurso rec, unsigned long cant) {
+RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
+                                                   unsigned long cant) {
     RecursosReservados res = malloc(sizeof(struct _RecursosReservados));
     res->cpu = rec == CPU ? cant : 0;
     res->mem = rec == MEM ? cant : 0;
@@ -178,4 +188,4 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec, unsigned lon
 int comp_recursos(RecursosReservados a, RecursosReservados b) {
     return a->cpu == b->cpu && a->mem == b->mem && a->gpu == b->gpu;
 }
-        
+
