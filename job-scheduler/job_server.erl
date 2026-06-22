@@ -6,7 +6,7 @@
 -module(job_server).
 
 -export([iniciar_job_server/0,job_server/1,crear_job/1,
-    execute_payload/1,acquire_loop/3,handle_failure/3,
+    ejecutar_trabajo/1,adquirir_loop/3,manejar_fallo/3,
     aplicar_timeout/2,enviar_estado_job/2]).
 
 -define(SEC, 1000).
@@ -45,10 +45,10 @@ job_server(JobMap) ->
 
 crear_job(Resource) -> 
     JobId = erlang:unique_integer([positive]),
-    JobPid = spawn(?MODULE,acquire_loop,[JobId,Resource,0]),
+    JobPid = spawn(?MODULE,adquirir_loop,[JobId,Resource,0]),
     job_server ! {add,JobPid,JobId}.
 
-execute_payload(JobId) ->
+ejecutar_trabajo(JobId) ->
     logF:log(msg,"[Job ~p] Ejecutando procesamiento en el cluster simulado...~n", [JobId]),
     timer:sleep(5 * ?SEC),
     
@@ -58,7 +58,7 @@ execute_payload(JobId) ->
     logF:log(msg,"[Job ~p] Terminado correctamente.~n", [JobId]),
     ok.
 
-acquire_loop(JobId, Recursos, Intentos) ->
+adquirir_loop(JobId, Recursos, Intentos) ->
     logF:log(msg,"[Job ~p] Solicitando los recursos: ~p~n", [JobId, Recursos]),
     
     send_recv_manager:enviar_send({jobRequest, JobId, Recursos}),
@@ -66,29 +66,29 @@ acquire_loop(JobId, Recursos, Intentos) ->
     receive
         jobGranted -> 
            logF:log(msg,"[Job ~p] EXITO! Todos los recursos concedidos.~n", [JobId]),
-            execute_payload(JobId);
+            ejecutar_trabajo(JobId);
             
         jobDenied ->
             logF:log(msg,"[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", [JobId, Recursos]),
-            handle_failure(JobId, Recursos, Intentos);
+            manejar_fallo(JobId, Recursos, Intentos);
             
         jobTimeout ->
             logF:log(msg,"[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", [JobId, Recursos]),
-            handle_failure(JobId, Recursos, Intentos);
+            manejar_fallo(JobId, Recursos, Intentos);
         closed -> closed
     after ?TIMEOUT ->
         logF:log(msg,"[Job ~p] ERROR CRITICO: Timeout interno del planificador.~n", [JobId]),
-        handle_failure(JobId, Recursos, Intentos)
+        manejar_fallo(JobId, Recursos, Intentos)
     end.
 
-handle_failure(JobId, Recursos, Intentos) ->
+manejar_fallo(JobId, Recursos, Intentos) ->
     SiguienteIntento = Intentos + 1,
     %% 1. Evitar Livelock: Dormir al proceso un tiempo exponencial con aleatoriedad
     aplicar_timeout(JobId, SiguienteIntento),
     
     %% 2. Reiniciar la máquina de estados desde la lista original limpia
     logF:log(msg,"[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, SiguienteIntento]),
-    acquire_loop(JobId, Recursos, SiguienteIntento).
+    adquirir_loop(JobId, Recursos, SiguienteIntento).
 
 
 
