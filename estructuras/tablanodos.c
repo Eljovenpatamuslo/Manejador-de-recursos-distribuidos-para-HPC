@@ -109,6 +109,10 @@ void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs,
         if (tiempoActual - actual->ultimoAnuncio > 15) {
             desconectar_nodo(tablaNodos, actual);
 
+            actual->antLista = NULL;
+            actual->sigLista = NULL;
+            actual->antHash = NULL;
+
             actual->sigHash = nodosExpirados;
             nodosExpirados = actual;
         }
@@ -260,6 +264,7 @@ char *tablanodos_obtener_nodos(TablaNodos tabla) {
         if (actual->sigLista != NULL) {
             strcat(resultado, ";");
         }
+        actual = actual->sigLista;
     }
 
     pthread_mutex_unlock(&tabla->mutex);

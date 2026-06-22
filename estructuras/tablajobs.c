@@ -72,7 +72,6 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
 
             pthread_mutex_unlock(&tabla->mutex);
 
-            free(datos->datosCliente);
             free(datos->recPedidos);
             free(datos->recReservados);
             free(datos);
@@ -331,7 +330,6 @@ void desconectar_job(TablaJobs tabla, JobActivo *job) {
 }
 
 void liberar_memoria_job(JobActivo *job) {
-    free(job->datos->datosCliente);
     free(job->datos->recPedidos);
     free(job->datos->recReservados);
     free(job->datos);
