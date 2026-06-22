@@ -30,7 +30,7 @@ typedef struct _RecursosReservados *RecursosReservados;
 typedef struct _DatosJob {
     unsigned long jobId;
     RolJob rol;
-    int fd;
+    void *datosCliente;
     char nodoIp[16];
     unsigned short nodoPuerto;
     RecursosReservados recReservados;
@@ -90,13 +90,14 @@ unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId, Tip
 int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 
 void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
-                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, int fd);
+                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, void *datosCliente);
 
-void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, TipoRecurso rec, 
-                               char ip[], unsigned short puerto);
+void tablajobs_recurso_granted(TablaJob tabla, unsigned long jobId, char ip[], unsigned short puerto);
 
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
 
 void desconectar_job(TablaJobs tabla, JobActivo* job);
+
+void liberar_memoria_job(JobActivo* job);
 
 #endif /* _TABLAJOBS_H_ */

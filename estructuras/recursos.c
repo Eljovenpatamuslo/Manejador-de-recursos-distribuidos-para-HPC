@@ -29,7 +29,7 @@ RecursosNodo inicializar_recursos_locales() {
 }
 
 int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId, 
-                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, int fd) {
+                     TipoRecurso rec, unsigned long cant, char ip[], unsigned short puerto, void *datosCliente) {
     Recurso recurso;
 
     if (rec == CPU) {
@@ -50,7 +50,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
             
         nuevosDatos->jobId = jobId;
         nuevosDatos->rol = JOB_REMOTO;
-        nuevosDatos->fd = fd
+        nuevosDatos->datosCliente = datosCliente
         strncpy(nuevosDatos->nodoIp, ip, 16);
         nuevosDatos->nodoPuerto = puerto;
         nuevosDatos->recReservados = inicializar_recursos_reservados(rec, cant);
@@ -70,7 +70,7 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned long jobId
         strncpy(nuevaSolicitud->ip, ip, 16);
         nuevaSolicitud->puerto = puerto;
         nuevaSolicitud->cant = cant;
-        nuevaSolicitud->fd = fd;
+        nuevaSolicitud->datosCliente = datosCliente;
 
         cola_encolar(recurso->solicitudPend, nuevaSolicitud);
 
@@ -112,7 +112,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
             // Almacenamos los datos necesarios de la solicitud
             unsigned long solJobId = solPendiente->jobId;
             unsigned long solCant = solPendiente->cant;
-            int solFd = solPendiente->fd;
+            void *solDatosCliente = solPendiente->datosCliente;
             char solIp[16];
             strncpy(solIp, solPendiente->ip, 16);
             unsigned short solPuerto = solPendiente->puerto;
@@ -123,7 +123,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs, unsigned
             assert(nuevosDatos != NULL);
             nuevosDatos->jobId = solJobId;
             nuevosDatos->rol = JOB_REMOTO;
-            nuevosDatos->fd = solFd;
+            nuevosDatos->datosCliente = solDatosCliente;
             strncpy(nuevosDatos->nodoIp, solIp, 16);
             nuevosDatos->nodoPuerto = solPuerto;
 
