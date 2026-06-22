@@ -223,16 +223,15 @@ int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId) {
     return flag;
 }
 
-void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
-                                TipoRecurso rec, unsigned long cant,
-                                const char *ipDestino,
-                                unsigned short puertoDestino) {
-
+void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId, TipoRecurso rec,
+                                unsigned long cant, const char* ipDestino, unsigned short puertoDestino, int fd) {
+    
     DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
     assert(nuevosDatos != NULL);
 
     nuevosDatos->jobId = jobId;
     nuevosDatos->rol = JOB_LOCAL;
+    nuevosDatos->fd = fd;
     strncpy(nuevosDatos->nodoIp, ipDestino, 16);
     nuevosDatos->nodoPuerto = puertoDestino;
 
@@ -261,9 +260,15 @@ void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId,
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
-            strcmp(actual->datos->nodoIp, ip) == 0 &&
-            actual->datos->nodoPuerto == puerto) {
-            actual->datos->recReservados = actual->datos->recPedidos;
+            strcmp(actual->datos->nodoIp, ip) == 0 && actual->datos->nodoPuerto == puerto) {
+            
+            if (rec == CPU) {
+                actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
+            } else if (rec == MEM) {
+                actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
+            } else if (rec == GPU) {
+                actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
+            }
             break;
         }
         actual = actual->sigJobId;
