@@ -58,9 +58,13 @@ esperar_respuesta_nodo(SockC) ->
             esperar_respuesta_nodo(SockC);
         {ok,"NODES " ++ Nodesn} -> 
             Nodes = string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
-            Scheduler = job_scheduler:get_pid_scheduler(),
-            Scheduler ! {ok, Nodes},
-
+            case job_scheduler:get_pid_scheduler() of
+                undefined -> 
+                    %% Si el scheduler ya no existe (ej. fin de test), lo ignoramos
+                    logF:log(msg, "Aviso: Se recibió NODES pero el scheduler ya no existe.~n");
+                Scheduler -> 
+                    Scheduler ! {ok, Nodes}
+            end,
             esperar_respuesta_nodo(SockC);
         {error,Razon} -> 
             logF:log(fatal,"Error al recibir mensaje del nodo, razon:~p ~n",[Razon]);

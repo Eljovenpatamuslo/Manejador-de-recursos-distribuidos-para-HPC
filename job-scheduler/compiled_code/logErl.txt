@@ -1,137 +1,48 @@
 ---Log del scheduler de erlang---
-Error al conectarse al nodo, razon:econnrefused 
----Log del scheduler de erlang---
-Error al conectarse al nodo, razon:econnrefused 
----Log del scheduler de erlang---
-Error al conectarse al nodo, razon:econnrefused 
----Log del scheduler de erlang---
----Log del scheduler de erlang---
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
-Error al conectarse al nodo, razon:econnrefused 
-, intentando otra vez...
----Log del scheduler de erlang---
+send_recv_manager iniciado 
 Erlang se conecto al nodo local
-nodos: [{{direccion,"192.168.1.10","8100"},{recursos,4,8192,1}},
-        {{direccion,"192.168.1.11","8101"},{recursos,2,4096,0}}]
-[Job 2372] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:5120 @192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:1024"
-[Job 2436] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:3072 @192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:3072"
----Log del scheduler de erlang---
-Erlang se conecto al nodo local
-nodos: [{{direccion,"192.168.1.10","8100"},{recursos,4,8192,1}},
-        {{direccion,"192.168.1.11","8101"},{recursos,2,4096,0}}]
-[Job 2370] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:7168 @192.168.1.11:8101:mem:2048"
-[Job 2434] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:1024"
-[Job 2498] Solicitando los recursos: "@192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:1024 "
-[Job 2370] EXITO! Todos los recursos concedidos.
-[Job 2370] Ejecutando procesamiento en el cluster simulado...
-[Job 2370] Procesamiento completado. Liberando infraestructura.
-[Job 2370] Terminado correctamente.
-[Job 2434] ALERTA: job denegado ("@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:1024"). Iniciando aborto...
-[Job 2434] Respetando backoff de 536 ms para mitigar contención.
-[Job 2434] Reiniciando ciclo de peticiones (Intento 1).
-[Job 2434] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:1024"
-[Job 2434] EXITO! Todos los recursos concedidos.
-[Job 2434] Ejecutando procesamiento en el cluster simulado...
-[Job 2434] Procesamiento completado. Liberando infraestructura.
-[Job 2434] Terminado correctamente.
-[Job 2498] EXITO! Todos los recursos concedidos.
-[Job 2498] Ejecutando procesamiento en el cluster simulado...
-[Job 2498] Procesamiento completado. Liberando infraestructura.
-[Job 2498] Terminado correctamente.
----Log del scheduler de erlang---
-Erlang se conecto al nodo local
+send_recv_manager iniciado 
 job_server iniciado
-[Job 66] Solicitando los recursos: "@192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:1024"
-[Job 130] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:4096 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:3072"
-[Job 194] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:mem:3072 @192.168.1.10:8100:gpu:1 "
+[Job 66] Solicitando los recursos: "@127.0.0.1:9000:cpu:2 @127.0.0.1:9000:gpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
 [Job 66] EXITO! Todos los recursos concedidos.
 [Job 66] Ejecutando procesamiento en el cluster simulado...
+[Job 98] ALERTA: job denegado ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"). Iniciando aborto...
+[Job 98] Respetando backoff de 409 ms para mitigar contención.
+[Job 98] Reiniciando ciclo de peticiones (Intento 1).
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
+[Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048").
+[Job 98] Respetando backoff de 653 ms para mitigar contención.
+[Job 98] Reiniciando ciclo de peticiones (Intento 2).
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:2048"
+[Job 98] EXITO! Todos los recursos concedidos.
+[Job 98] Ejecutando procesamiento en el cluster simulado...
 [Job 66] Procesamiento completado. Liberando infraestructura.
 [Job 66] Terminado correctamente.
-[Job 130] ALERTA: job denegado ("@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:4096 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:3072"). Iniciando aborto...
-[Job 130] Respetando backoff de 557 ms para mitigar contención.
-[Job 130] Reiniciando ciclo de peticiones (Intento 1).
-[Job 130] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:4096 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:3072"
-Error, mensaje: {ok,"LS\n"} inesperado 
-Error, mensaje: {ok,"CACA\n"} inesperado 
-Error, mensaje: {ok,"CAC\n"} inesperado 
-Error, mensaje: {ok,"SDA\n"} inesperado 
-Error, mensaje: {ok,"ASD\n"} inesperado 
-Error, mensaje: {ok,"ASD\n"} inesperado 
----Log del scheduler de erlang---
-Erlang se conecto al nodo local
-job_server iniciado
-[Job 2370] Solicitando los recursos: "@192.168.1.10:8100:mem:3072 @192.168.1.11:8101:mem:1024"
-[Job 2434] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:3072 @192.168.1.11:8101:mem:1024"
-[Job 2498] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:2048 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:2048"
-No existe job asociado a la JobId:error 
----Log del scheduler de erlang---
-Erlang se conecto al nodo local
-job_server iniciado
-[Job 68] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:2048"
-[Job 132] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:7168 @192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:1024"
-[Job 196] Solicitando los recursos: "@192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:1024 "
-No existe job asociado a la JobId:error 
-No existe job asociado a la JobId:error 
-No existe job asociado a la JobId:error 
-Error, mensaje: {ok,"CLOSE\n"} inesperado 
-Error al recibir mensaje del nodo, razon:closed 
+[Job 98] Procesamiento completado. Liberando infraestructura.
+[Job 98] Terminado correctamente.
 ---Log del scheduler de erlang---
 send_recv_manager iniciado 
 Erlang se conecto al nodo local
 send_recv_manager iniciado 
 job_server iniciado
-Error, mensaje: {ok,"logF:log(msg,\"send_recv_manager iniciado ~n\"),\n"} inesperado 
-[Job 2434] Solicitando los recursos: "@192.168.1.10:8100:mem:1024 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:2048"
-[Job 2498] Solicitando los recursos: "@192.168.1.10:8100:mem:1024 @192.168.1.11:8101:mem:2048"
-[Job 2562] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:3072 "
-[Job 2626] Solicitando los recursos: "@192.168.1.10:8100:cpu:3 @192.168.1.10:8100:mem:3072 @192.168.1.10:8100:gpu:1 "
----Log del scheduler de erlang---
-send_recv_manager iniciado 
-Erlang se conecto al nodo local
-send_recv_manager iniciado 
-job_server iniciado
-[Job 2373] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:6144 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:4096"
-[Job 2437] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:1024 "
-[Job 2501] Solicitando los recursos: "@192.168.1.10:8100:cpu:1 @192.168.1.10:8100:mem:1024"
-No existe job asociado a la JobId:2 
----Log del scheduler de erlang---
-send_recv_manager iniciado 
-Erlang se conecto al nodo local
-send_recv_manager iniciado 
-job_server iniciado
-[Job 2438] Solicitando los recursos: "@192.168.1.10:8100:mem:1024 "
-[Job 2374] Solicitando los recursos: "@192.168.1.10:8100:mem:4096 @192.168.1.11:8101:cpu:2 @192.168.1.11:8101:mem:4096"
-[Job 2502] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:mem:2048 @192.168.1.10:8100:gpu:1 "
-[Job 2566] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:mem:1024 "
----Log del scheduler de erlang---
-send_recv_manager iniciado 
-Erlang se conecto al nodo local
-send_recv_manager iniciado 
-job_server iniciado
-[Job 2374] Solicitando los recursos: "@192.168.1.10:8100:mem:1024 @192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:3072"
-[Job 2438] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:gpu:1 @192.168.1.10:8100:mem:1024 @192.168.1.11:8101:cpu:1 @192.168.1.11:8101:mem:1024"
-[Job 2502] Solicitando los recursos: "@192.168.1.10:8100:cpu:2 @192.168.1.10:8100:mem:5120 "
-[Job 2566] Solicitando los recursos: "@192.168.1.10:8100:mem:1024"
-[Job 2502] EXITO! Todos los recursos concedidos.
-[Job 2502] Ejecutando procesamiento en el cluster simulado...
-[Job 2502] Procesamiento completado. Liberando infraestructura.
-[Job 2502] Terminado correctamente.
-No existe job asociado a la JobId:3123 
-No existe job asociado a la JobId:120391023 
-[Job 2566] EXITO! Todos los recursos concedidos.
-[Job 2566] Ejecutando procesamiento en el cluster simulado...
-Error al recibir mensaje del nodo, razon:closed 
+[Job 66] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:gpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1"
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
+[Job 130] Solicitando los recursos: "@127.0.0.1:9001:cpu:2 @127.0.0.1:9001:mem:3072 "
+[Job 66] EXITO! Todos los recursos concedidos.
+[Job 66] Ejecutando procesamiento en el cluster simulado...
+[Job 98] ALERTA: job denegado ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"). Iniciando aborto...
+[Job 98] Respetando backoff de 357 ms para mitigar contención.
+[Job 98] Reiniciando ciclo de peticiones (Intento 1).
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
+[Job 98] ALERTA: Timeout en red por recursos ("@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024").
+[Job 98] Respetando backoff de 656 ms para mitigar contención.
+[Job 98] Reiniciando ciclo de peticiones (Intento 2).
+[Job 98] Solicitando los recursos: "@127.0.0.1:9000:cpu:1 @127.0.0.1:9000:mem:1024 @127.0.0.1:9001:cpu:1 @127.0.0.1:9001:mem:1024"
+[Job 98] EXITO! Todos los recursos concedidos.
+[Job 98] Ejecutando procesamiento en el cluster simulado...
+[Job 66] Procesamiento completado. Liberando infraestructura.
+[Job 66] Terminado correctamente.
+[Job 98] Procesamiento completado. Liberando infraestructura.
+[Job 98] Terminado correctamente.
+Error al recibir mensaje del nodo, razon:timeout 

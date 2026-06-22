@@ -1,5 +1,5 @@
 -module(automated_tests).
--export([run_suite/0, test_runner_loop/2]).
+-export([run_suite/0, test_runner_acceptor/1]).
 
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
@@ -76,21 +76,29 @@ test_parsing_multiples_nodos() ->
 %% CASO 4: Validación de Estructura del Generador Estocástico
 %% ===================================================================
 test_job_generator_output() ->
-    io:format("[TEST] Validando consistencia strings en job_generator... "),
+    io:format("[TEST] Validando formato estricto @ip:puerto:recurso:cantidad... "),
     MockNodes = [{#direccion{ip="127.0.0.1", puerto="9000"}, #recursos{cpu=2, mem=1024, gpu=0}}],
     Jobs = job_generator:obtener_recursos_para_jobs(MockNodes),
-    %% Verificamos que sea una lista de strings y que contenga los delimitadores del protocolo
+    
     case Jobs of
         [] -> 
             io:format("FALLÓ: El generador retornó una lista vacía~n"),
             exit(test_job_generator_empty);
         [FirstJob | _] ->
-            case string:find(FirstJob, "@") of
-                nomatch -> 
-                    io:format("FALLÓ: El string del job carece del prefijo '@'. Obtenido: ~p~n", [FirstJob]),
-                    exit(test_job_generator_invalid_format);
+            %% FirstJob tiene múltiples recursos separados por espacio. Agarramos el primero.
+            [PrimerRecurso | _] = string:lexemes(FirstJob, " "),
+            
+            %% Partimos el recurso por los dos puntos ":"
+            %% Debe resultar en exactamente 4 partes para ser válido.
+            TokensRecurso = string:lexemes(PrimerRecurso, ":"),
+            
+            case TokensRecurso of
+                ["@" ++ _Ip, _Puerto, TipoRecurso, _Cantidad] when 
+                        TipoRecurso == "cpu"; TipoRecurso == "mem"; TipoRecurso == "gpu" -> 
+                    io:format("OK~n"), ok;
                 _ -> 
-                    io:format("OK~n"), ok
+                    io:format("FALLÓ: El string no respeta la estructura estricta. Obtenido: ~p~n", [PrimerRecurso]),
+                    exit(test_job_generator_invalid_format)
             end
     end.
 
@@ -98,71 +106,82 @@ test_job_generator_output() ->
 %% CASO 5: Pruebas de Integración Dinámicas (Inyección de Fallos TCP)
 %% ===================================================================
 run_integration_tests() ->
-    io:format("[TEST] Iniciando servidor TCP Mock para inyección de estados...~n"),
-    {ok, LSocket} = gen_tcp:listen(3947, [list, {active, false}, {reuseaddr, true}]),
+    PuertoMock = 3947,
+    io:format("[TEST] Iniciando servidor TCP Mock para inyección de estados en puerto ~p...~n", [PuertoMock]),
+    {ok, LSocket} = gen_tcp:listen(PuertoMock, [list, {active, false}, {reuseaddr, true}, {packet, 0}]),
     
     %% Levantamos un proceso controlador del socket simulado
-    spawn_link(?MODULE, test_runner_loop, [LSocket, 1]),
+    spawn_link(?MODULE, test_runner_acceptor, [LSocket]),
     
-    io:format("[TEST] Inicializando entorno real del planificador...~n"),
-    %% Inicializamos tu planificador real de Erlang
-    job_scheduler:scheduler_init(),
+    io:format("[TEST] Inicializando entorno real del planificador en background...~n"),
     
-    %% Monitoreamos la ejecución de la ráfaga de jobs.
-    %% Como el scheduler es infinito, dejamos correr la simulación por 12 segundos
-    %% para dar tiempo a evaluar éxitos, denegaciones y backoffs.
+    %% INYECTAMOS EL PUERTO Y LO CORREMOS EN BACKGROUND PARA NO BLOQUEAR EL TEST
+    spawn(fun() -> job_scheduler:scheduler_init(PuertoMock) end),
+    
+    %% Monitoreamos la ejecución.
     timer:sleep(12000),
-    io:format("[TEST] Fase de simulación dinámica finalizada con éxito.~n"),
+    
+    io:format("~n[TEST] Fase de simulación dinámica finalizada con éxito.~n"),
     gen_tcp:close(LSocket),
+    
+    %% Limpieza post-test para no dejar el entorno colgado
+    catch unregister(scheduler),
     ok.
 
-%% Loop interno que simula los estados del Agente en C
-test_runner_loop(LSocket, EstadoFase) ->
+%% Acepta la conexión inicial de tu manager TCP
+test_runner_acceptor(LSocket) ->
     case gen_tcp:accept(LSocket) of
         {ok, Socket} ->
-            handle_mock_agent_io(Socket, EstadoFase),
-            test_runner_loop(LSocket, EstadoFase + 1);
+            %% Iniciamos la fase 1 en cuanto se conecta
+            handle_mock_agent_io(Socket, 1),
+            test_runner_acceptor(LSocket);
         {error, _} ->
             ok
     end.
 
+%% Bucle principal de respuesta estocástica
 handle_mock_agent_io(Socket, EstadoFase) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
             Tokens = string:lexemes(Data, " \n"),
+            
+            %% Lógica rotativa de fallos (1->2->3->1)
+            SiguienteFase = if EstadoFase >= 3 -> 1; true -> EstadoFase + 1 end,
+
             case Tokens of
                 ["GET_NODES"] ->
-                    %% Enviamos siempre una topología válida
                     Topologia = "NODES 127.0.0.1:9000:cpu:2:mem:2048:gpu:1;127.0.0.1:9001:cpu:4:mem:4096\n",
                     gen_tcp:send(Socket, Topologia),
+                    %% No avanzamos de fase por pedir los nodos
                     handle_mock_agent_io(Socket, EstadoFase);
                 
                 ["JOB_REQUEST", JobId | _Recursos] ->
-                    %% Inyectamos fallos deterministas según la fase del test
                     Respuesta = case EstadoFase of
                         1 -> 
-                            io:format("[MOCK INYECTOR] Caso A (Happy Path): Concediendo Job ~p~n", [JobId]),
+                            io:format("[MOCK INYECTOR] Caso A: Concediendo Job ~p~n", [JobId]),
                             "JOB_GRANTED " ++ JobId ++ "\n";
                         2 -> 
-                            io:format("[MOCK INYECTOR] Caso B (Mitigación Livelock): Denegando Job ~p. Forzando reintento.~n", [JobId]),
+                            io:format("[MOCK INYECTOR] Caso B: Denegando Job ~p. Forzando reintento.~n", [JobId]),
                             "JOB_DENIED " ++ JobId ++ "\n";
                         3 -> 
-                            io:format("[MOCK INYECTOR] Caso C (Pérdida de paquetes): Enviando JOB_TIMEOUT para Job ~p~n", [JobId]),
+                            io:format("[MOCK INYECTOR] Caso C: Enviando JOB_TIMEOUT para Job ~p~n", [JobId]),
                             "JOB_TIMEOUT " ++ JobId ++ "\n";
                         _ -> 
                             "JOB_GRANTED " ++ JobId ++ "\n"
                     end,
-                    timer:sleep(100), %% Simulación de latencia base
+                    timer:sleep(100), %% Latencia base de simulación
                     gen_tcp:send(Socket, Respuesta),
-                    handle_mock_agent_io(Socket, EstadoFase);
+                    %% Acá avanzamos al siguiente caso para obligar al scheduler a lidiar con todo
+                    handle_mock_agent_io(Socket, SiguienteFase);
                 
                 ["JOB_RELEASE", JobId] ->
-                    io:format("[MOCK INYECTOR] Confirmación recibida: Liberación de recursos del Job ~p.~n", [JobId]),
+                    io:format("[MOCK INYECTOR] Confirmación recibida: Liberación del Job ~p.~n", [JobId]),
                     handle_mock_agent_io(Socket, EstadoFase);
                 
                 _ -> 
                     handle_mock_agent_io(Socket, EstadoFase)
             end;
         {error, closed} ->
+            io:format("[MOCK INYECTOR] El cliente cerró la conexión TCP.~n"),
             ok
     end.
