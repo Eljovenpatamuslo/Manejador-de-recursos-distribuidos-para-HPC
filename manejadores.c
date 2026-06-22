@@ -154,28 +154,32 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                    "Cantidad=%lu\n",
                    cliente->fd, jobId, recurso, cant);
 
-            DatosNodo datos = tablanodos_buscar(tablaNodos, cliente->ip);
+            DatosNodo *datos = tablanodos_buscar(tablaNodos, cliente->ip);
+            if (datos != NULL) {
 
-            int estadoSolicitud = reservar_recurso(
-                recNodo, tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                cant, cliente->ip, datos.puerto, cliente->fd);
+                int estadoSolicitud =
+                    reservar_recurso(recNodo, tablaJobs, jobId,
+                                     tipo_recurso_desde_string(recurso), cant,
+                                     cliente->ip, datos->puerto, cliente);
 
-            if (estadoSolicitud == 1) {
-                printf("[AGENTE C %d] El recurso se reservo correctamente\n",
-                       cliente->fd);
-                enviar_formateado(cliente->fd, "GRANTED %lu\n", jobId);
-            }
+                if (estadoSolicitud == 1) {
+                    printf(
+                        "[AGENTE C %d] El recurso se reservo correctamente\n",
+                        cliente->fd);
+                    enviar_formateado(cliente->fd, "GRANTED %lu\n", jobId);
+                }
 
-            if (estadoSolicitud == 0) {
-                printf(
-                    "[AGENTE C % d] La reserva se agregó a la cola de espera\n",
-                    cliente->fd);
-            }
+                if (estadoSolicitud == 0) {
+                    printf("[AGENTE C % d] La reserva se agregó a la cola de "
+                           "espera\n",
+                           cliente->fd);
+                }
 
-            if (estadoSolicitud == -1) {
-                printf("[AGENTE C % d] No se pudo realizar la reserva\n",
-                       cliente->fd);
-                enviar_formateado(cliente->fd, "DENIED %lu\n", jobId);
+                if (estadoSolicitud == -1) {
+                    printf("[AGENTE C % d] No se pudo realizar la reserva\n",
+                           cliente->fd);
+                    enviar_formateado(cliente->fd, "DENIED %lu\n", jobId);
+                }
             }
         }
 
@@ -185,9 +189,9 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Concedio GRANTED: Job=%lu\n", cliente->fd,
                    jobId);
 
-            DatosNodo datos = tablanodos_buscar(tablaNodos, cliente->ip);
-            // tablajobs_recurso_granted(tablaJobs, jobId, cliente->ip,
-            //                           datos->puerto);
+            DatosNodo *datos = tablanodos_buscar(tablaNodos, cliente->ip);
+            tablajobs_recurso_granted(tablaJobs, jobId, cliente->ip,
+                                      datos->puerto);
 
             if (tablajobs_job_granted(tablaJobs, jobId)) {
                 enviar_formateado(erlangFd, "JOB_GRANTED %lu\n", jobId);
@@ -243,9 +247,11 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
             continue;
         }
 
-        enviar_formateado(actual->datos->fd, "RELEASE %lu %s %d\n", jobId, rec,
-                          cant);
-        close(actual->datos->fd);
+        int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
+        enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
+
+        close(fd);
+        free(actual->datos->datosCliente);
 
         actual = actual->sig;
     }
@@ -275,17 +281,17 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                 printf("  -> Dependencia: Host=%s, Recurso=%s, Cantidad=%d\n",
                        ip, recurso, cantidad);
 
-                DatosNodo datos = tablanodos_buscar(tablaNodos, ip);
+                DatosNodo *datos = tablanodos_buscar(tablaNodos, ip);
 
                 int fdSalida =
-                    crear_socket_saliente_nobloqueante(ip, datos.puerto);
-
-                registrar_solicitud_propia(
-                    tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                    cantidad, ip, datos.puerto, fdSalida);
+                    crear_socket_saliente_nobloqueante(ip, datos->puerto);
 
                 ClienteConexion *nueva_conexion =
                     crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
+
+                registrar_solicitud_propia(
+                    tablaJobs, jobId, tipo_recurso_desde_string(recurso),
+                    cantidad, ip, datos->puerto, nueva_conexion);
 
                 snprintf(nueva_conexion->mensaje, 256, "RESERVE %lu %s %d\n",
                          jobId, recurso, cantidad);
