@@ -19,7 +19,7 @@ unsigned int obtener_cpus() {
         return 1;
     }
 
-    return (unsigned int) cpus;
+    return (unsigned int)cpus;
 }
 
 unsigned long obtener_mem() {
@@ -30,19 +30,20 @@ unsigned long obtener_mem() {
         return 1;
     }
 
-    return (unsigned long) info.totalram * info.mem_unit / (1024 * 1024);
+    return (unsigned long)info.totalram * info.mem_unit / (1024 * 1024);
 }
 
 unsigned int obtener_gpus() {
     struct dirent *de;
     DIR *dr = opendir("/sys/class/drm");
     if (dr == NULL) {
-        return 0; 
+        return 0;
     }
 
     unsigned int contador_gpus = 0;
     while ((de = readdir(dr)) != NULL) {
-        if (strncmp(de->d_name, "card", 4) == 0 && strchr(de->d_name, '-') == NULL) {
+        if (strncmp(de->d_name, "card", 4) == 0 &&
+            strchr(de->d_name, '-') == NULL) {
             if (de->d_name[4] >= '0' && de->d_name[4] <= '9') {
                 contador_gpus++;
             }

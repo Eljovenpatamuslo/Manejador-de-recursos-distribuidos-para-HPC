@@ -2,14 +2,12 @@
 
 #define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 
-int enviar_formateado(int fd, const char *formato, ...);
+static int enviar_formateado(int fd, const char *formato, ...);
 
 ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
                                char *mensaje) {
     ClienteConexion *nuevoCliente = malloc(sizeof(ClienteConexion));
-
     nuevoCliente->fd = clienteFD;
-
     nuevoCliente->tipo = tipo;
 
     if (ip != NULL)
@@ -26,7 +24,6 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             int erlangFd, int epollFd) {
 
     if (cliente->tipo == CONEXION_SALIENTE) {
-        debug("10");
 
         int error = 0;
         socklen_t len = sizeof(error);
@@ -174,16 +171,15 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
             DatosNodo *datos = tablanodos_buscar(tablaNodos, cliente->ip);
             if (datos != NULL) {
-
                 int estadoSolicitud =
                     reservar_recurso(recNodo, tablaJobs, jobId,
                                      tipo_recurso_desde_string(recurso), cant,
                                      cliente->ip, datos->puerto, cliente);
 
                 if (estadoSolicitud == 1) {
-                    printf(
-                        "[AGENTE C %d] El recurso se reservo correctamente\n",
-                        cliente->fd);
+                    printf("[AGENTE C %d] El recurso se reservo "
+                           "correctamente\n",
+                           cliente->fd);
                     enviar_formateado(cliente->fd, "GRANTED %lu\n", jobId);
                 }
 
@@ -213,6 +209,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
             if (tablajobs_job_granted(tablaJobs, jobId)) {
                 enviar_formateado(erlangFd, "JOB_GRANTED %lu\n", jobId);
+                printf("[ERLANG %d] Recibio JOB_GRANTED\n", erlangFd);
             }
         }
 
@@ -223,6 +220,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
                    jobId);
 
             enviar_formateado(erlangFd, "JOB_DENIED %lu\n", jobId);
+            printf("[ERLANG %d] Recibio JOB_DENIED\n", erlangFd);
         }
 
     } else if (strcmp(comando, "RELEASE") == 0) {
@@ -245,11 +243,8 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
     }
 }
 
-void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
-    debug("ENTRO");
+void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
     ListaResultados lista = tablajobs_release_job(tablaJobs, jobId);
-    printf("SALGO\n");
-    debug("SALGO");
     struct _NodoResultado *actual = lista;
 
     while (actual != NULL) {
@@ -267,16 +262,15 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
         } else {
             continue;
         }
-        debug("LIB");
         int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
         enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
 
+        epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
         close(fd);
         free(actual->datos->datosCliente);
 
         actual = actual->sig;
     }
-    debug("LIB1");
 }
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
@@ -304,26 +298,27 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                        ip, recurso, cantidad);
 
                 DatosNodo *datos = tablanodos_buscar(tablaNodos, ip);
-                debug(ip);
-                printf("puerto: %d", datos->puerto);
-                int fdSalida =
-                    crear_socket_saliente_nobloqueante(ip, datos->puerto);
+                if (datos != NULL) {
+                    printf("puerto: %d", datos->puerto);
+                    int fdSalida =
+                        crear_socket_saliente_nobloqueante(ip, datos->puerto);
 
-                ClienteConexion *nueva_conexion =
-                    crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
+                    ClienteConexion *nueva_conexion =
+                        crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
 
-                registrar_solicitud_propia(
-                    tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                    cantidad, ip, datos->puerto, nueva_conexion);
+                    registrar_solicitud_propia(
+                        tablaJobs, jobId, tipo_recurso_desde_string(recurso),
+                        cantidad, ip, datos->puerto, nueva_conexion);
 
-                snprintf(nueva_conexion->mensaje, 256, "RESERVE %lu %s %d\n",
-                         jobId, recurso, cantidad);
+                    snprintf(nueva_conexion->mensaje, 256,
+                             "RESERVE %lu %s %d\n", jobId, recurso, cantidad);
 
-                // Cuando se arme la conexion se enviara el mensaje guardado en
-                // la estructura
-                agregar_socket_epoll(epollFd, fdSalida, EPOLLOUT | EPOLLONESHOT,
-                                     nueva_conexion, EPOLL_CTL_ADD);
-
+                    // Cuando se arme la conexion se enviara el mensaje guardado
+                    // en la estructura
+                    agregar_socket_epoll(epollFd, fdSalida,
+                                         EPOLLOUT | EPOLLONESHOT,
+                                         nueva_conexion, EPOLL_CTL_ADD);
+                }
                 ptr += bytes_leidos;
             }
 
@@ -353,7 +348,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             printf("[ERLANG %d] Planificador notifica fin de Job ID: %lu\n",
                    cliente->fd, jobId);
 
-            liberar_job(tablaJobs, jobId);
+            liberar_job(tablaJobs, jobId, epollFd);
         }
     }
 }
@@ -373,10 +368,13 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
         if (strncmp(buffer_udp, "ANNOUNCE", 8) == 0) {
 
             DatosNodo *datos = malloc(sizeof(DatosNodo));
+            if (datos == NULL)
+                return;
 
             if (inet_ntop(AF_INET, &(sender_addr.sin_addr), datos->ip,
                           INET_ADDRSTRLEN) == NULL) {
                 perror("inet_ntop fallo al extraer la IP");
+                free(datos);
                 return;
             }
 
@@ -388,6 +386,8 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
                        datos->ip, datos->puerto, datos->recursos);
 
                 tablanodos_insertar(tablaNodos, datos);
+            } else {
+                free(datos);
             }
         }
     }

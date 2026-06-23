@@ -171,7 +171,6 @@ int main() {
     printf("Empiezo a escuchar peticiones en los listen sockets\n");
     agregar_socket_epoll(epollFd, socketEscuchaPublica, EPOLLIN, ctxPublico,
                          EPOLL_CTL_ADD);
-    debug(1);
     agregar_socket_epoll(epollFd, socketEscuchaLocal, EPOLLIN, ctxLocal,
                          EPOLL_CTL_ADD);
 
