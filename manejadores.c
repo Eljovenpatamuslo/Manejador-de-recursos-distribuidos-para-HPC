@@ -366,46 +366,40 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
         buffer_udp[bytes_recibidos] = '\0';
 
         if (strncmp(buffer_udp, "ANNOUNCE", 8) == 0) {
-
             DatosNodo *datos = malloc(sizeof(DatosNodo));
-            if (datos == NULL)
+            if (!datos)
                 return;
 
-            if (inet_ntop(AF_INET, &(sender_addr.sin_addr), datos->ip,
-                          INET_ADDRSTRLEN) == NULL) {
-                perror("inet_ntop fallo al extraer la IP");
-                free(datos);
-                return;
-            }
+            if (sscanf(buffer_udp, "ANNOUNCE %15s %hu %63[^\n]", datos->ip,
+                       &datos->puerto, datos->recursos) == 3) {
 
-            if (sscanf(buffer_udp, "ANNOUNCE %hu %63[^\n]", &datos->puerto,
-                       datos->recursos) == 2) {
-
-                printf("Descubierto nodo activo: IP=%s, Puerto=%hu, "
-                       "Recursos=%s\n",
-                       datos->ip, datos->puerto, datos->recursos);
+                printf(
+                    "Descubierto nodo activo: IP=%s, Puerto=%hu, Recursos=%s\n",
+                    datos->ip, datos->puerto, datos->recursos);
 
                 tablanodos_insertar(tablaNodos, datos);
             } else {
-                free(datos);
+                free(datos); // Si el parseo falla, no filtramos memoria
             }
         }
     }
 }
 
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
-                   RecursosNodo recNodo, int puertoTcpEscucha) {
+                   RecursosNodo recNodo, int puertoTcpEscucha,
+                   const char *miIp) {
     // Vacio el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
-    anuncio_broadcast(udp_sock, puerto_udp, recNodo, puertoTcpEscucha);
+    anuncio_broadcast(udp_sock, puerto_udp, recNodo, puertoTcpEscucha, miIp);
 }
 
 void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo,
-                       int puertoTcpEscucha) {
+                       int puertoTcpEscucha, const char *miIp) {
     char mensaje_anuncio[256];
+
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puertoTcpEscucha,
+             "ANNOUNCE %s %d cpu:%lu mem:%lu gpu:%lu\n", miIp, puertoTcpEscucha,
              recNodo->cpu->cantDisp, recNodo->mem->cantDisp,
              recNodo->gpu->cantDisp);
 
@@ -413,10 +407,11 @@ void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo,
     memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(puerto_udp);
-    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
+
+    dest_addr.sin_addr.s_addr = inet_addr("127.255.255.255");
 
     sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
            (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
-    printf("Anuncio broadcast enviado\n");
+    printf("Anuncio broadcast enviado desde %s\n", miIp);
 }

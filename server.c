@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <sys/epoll.h>
 
-#define PUBLIC_DIR "192.168.0.14"
-#define LOCAL_DIR "127.0.0.2"
+#define PUBLIC_DIR "127.0.0.10"
+#define LOCAL_DIR "127.0.0.20"
 #define PUERTO_TCP 12000
 #define PUERTO_UDP 12529
 #define MAX_EV_EPOLL 64
@@ -94,7 +94,7 @@ void *gestionar_epoll(void *arg) {
 
             if (eventFd == timerSocket) {
                 manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo,
-                              PUERTO_TCP);
+                              PUERTO_TCP, PUBLIC_DIR);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
                                      contexto, EPOLL_CTL_MOD);
             } else if (eventFd == udpSocket) {
@@ -164,7 +164,7 @@ int main() {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo, PUERTO_TCP);
+    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo, PUERTO_TCP, PUBLIC_DIR);
     agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, ctxUdp,
                          EPOLL_CTL_ADD);
     sleep(2);
