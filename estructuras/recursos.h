@@ -42,7 +42,7 @@ struct _NodoPromovido {
 typedef struct _NodoPromovido *ListaPromovidos;
 
 /**
- *
+ * Inicializa los recursos vacios.
  */
 Recurso inicializar_recurso(unsigned long capacidad);
 
@@ -51,19 +51,36 @@ Recurso inicializar_recurso(unsigned long capacidad);
  */
 RecursosNodo inicializar_recursos_locales();
 
+/**
+ * Reserva un recurso en caso de que haya la cantidad disponible, en otro caso 
+ * encola la solicitud.
+ */
 int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
                      unsigned long jobId, TipoRecurso rec, unsigned long cant,
                      char ip[], unsigned short puerto, void *datosCliente);
 
+/**
+ * Libera el recurso del reservado por el job y atiende las solicitudes pendientes
+ * en orden. Se devuelve una lista con las solicitudes que fueron atendidas.
+ */
 ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
                                 unsigned long jobId, TipoRecurso rec);
 
+/**
+ * Libera los recursos dados, devolviendolos a la pool general.
+ */
 void liberar_recursos_reservados(RecursosNodo recursos,
                                  RecursosReservados reservados);
 
+/**
+ * Inicializa la estructura del recurso reservando la cantidad dada.
+ */
 RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
                                                    unsigned long cant);
 
+/**
+ * Compara si las dos instancias de recursos reservados coinciden en sus campos.
+ */
 int comp_recursos(RecursosReservados a, RecursosReservados b);
 
 #endif /* __RECURSOS_H__ */

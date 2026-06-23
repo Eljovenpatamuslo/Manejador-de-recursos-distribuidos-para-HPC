@@ -79,24 +79,49 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos);
 void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
                                unsigned short puerto, RecursosNodo recursos);
 
+/**
+ * Resta el recurso dado del job (identificado por el job id) y retorna lo restado.
+ */
 unsigned long tablajobs_restar_recurso(TablaJobs tabla, unsigned long jobId,
                                        TipoRecurso rec);
 
+/**
+ * Verifica que la cantidad de recursos pedidos del job coincidan con la cantidad
+ * de recursos concedidos (reservados).
+ */
 int tablajobs_job_granted(TablaJobs tabla, unsigned long jobId);
 
+/**
+ * Guarda en la tabla reservas hechas a otros nodos, guardando que se pidió y a
+ * quién se pidió. 
+ */
 void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
                                 TipoRecurso rec, unsigned long cant,
                                 const char *ipDestino,
                                 unsigned short puertoDestino,
                                 void *datosCliente);
 
+/**
+ * Se guarda el recurso como reservado al recibir una confirmación de una petición
+ * a un nodo remoto.
+ */
 void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
                                unsigned short puerto);
 
+/**
+ * Libera los recursos asociados al job. Retorna una lista de todas las reservas
+ * hechas a nodos remotos.
+ */
 ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId);
 
+/**
+ * Desconecta el job de la tabla.
+ */
 void desconectar_job(TablaJobs tabla, JobActivo *job);
 
+/**
+ * Libera la memoria de los datos del job.
+ */
 void liberar_memoria_job(JobActivo *job);
 
 #endif /* _TABLAJOBS_H_ */
