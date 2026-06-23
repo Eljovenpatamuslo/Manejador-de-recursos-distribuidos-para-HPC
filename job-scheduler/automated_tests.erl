@@ -150,7 +150,7 @@ handle_mock_agent_io(Socket, EstadoFase) ->
 
             case Tokens of
                 ["GET_NODES"] ->
-                    Topologia = "NODES 127.0.0.1:9000:cpu:2:mem:2048:gpu:1;127.0.0.1:9001:cpu:4:mem:4096\n",
+                    Topologia = "NODES 127.0.0.1:9000:cpu:2:mem:2048:gpu:1;127.0.0.1:9001:cpu:4:mem:4096",
                     gen_tcp:send(Socket, Topologia),
                     %% No avanzamos de fase por pedir los nodos
                     handle_mock_agent_io(Socket, EstadoFase);

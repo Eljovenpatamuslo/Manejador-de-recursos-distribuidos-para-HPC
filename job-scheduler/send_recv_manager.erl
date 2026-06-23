@@ -10,10 +10,10 @@
 
 %usar puerto 12000
 -define(HOST, "localhost").
--define(CONFIGCONNECT, [{active,false},{packet,0}]).
+-define(CONFIGCONNECT, [{active,false},{packet,line}]).
 -define(INTENTOS, 10).
 -define(SEC, 1000).
--define(TIMEOUT, 60 * ?SEC).
+-define(TIMEOUT, 600 * ?SEC).
 
 send_recv_init(PuertoC) ->
     {ok, SockC} = conectarse_a_nodo_local(PuertoC,?INTENTOS),
@@ -57,8 +57,8 @@ esperar_respuesta_nodo(SockC) ->
             job_server:enviar_estado_job(jobTimeout,JobId),
 
             esperar_respuesta_nodo(SockC);
-        {ok,Nodesn} -> 
-            Nodes = Nodesn,%string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
+        {ok,"NODES " ++ Nodesn} -> 
+            Nodes = string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
             case job_scheduler:get_pid_scheduler() of
                 undefined -> 
                     %% Si el scheduler ya no existe (ej. fin de test), lo ignoramos

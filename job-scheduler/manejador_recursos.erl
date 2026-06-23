@@ -44,7 +44,7 @@ format_nodes([Node | Nodes]) ->
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
 obtener_recursos_para_jobs(ParsedNodes) ->
     Nod = [f(X) || X <- ParsedNodes],
-        logF:log(msg,"f(ParsedNodes):~p ~n",[Nod]),
+    %logF:log(msg,"f(ParsedNodes):~p ~n",[Nod]),
     %%filtramos listas vacías
     lists:filter(fun(E) -> E /= " " end, h(Nod)).
 
@@ -73,7 +73,7 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
     end,
     
     StrCpu = if 
-        CantCpu > 0 -> "@" ++ Ip ++ ":" ++ Puerto ++ ":cpu:" ++ integer_to_list(CantCpu); 
+        CantCpu > 0 -> "@" ++ Ip ++ ":cpu:" ++ integer_to_list(CantCpu); 
         true -> "" 
     end,
 
@@ -83,7 +83,7 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
                 StrCpu /= "" -> " ";
                 true -> ""
             end,
-            Before ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":mem:" ++ integer_to_list(CantMem);
+            Before ++ "@" ++ Ip ++ ":mem:" ++ integer_to_list(CantMem);
             
         true -> "" 
     end,
@@ -94,7 +94,7 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
                 StrMem /= "" -> " ";
                 true -> ""
             end,
-            Before1 ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":gpu:" ++ integer_to_list(CantGpu);
+            Before1 ++ "@" ++ Ip ++ ":gpu:" ++ integer_to_list(CantGpu);
         
         true -> "" 
     end,
