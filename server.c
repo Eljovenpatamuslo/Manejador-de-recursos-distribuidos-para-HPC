@@ -11,9 +11,6 @@
 #include <stdlib.h>
 #include <sys/epoll.h>
 
-#define PUBLIC_DIR "192.168.0.14"
-#define LOCAL_DIR "127.0.0.2"
-#define PUERTO_TCP 12000
 #define PUERTO_UDP 12529
 #define MAX_EV_EPOLL 64
 
@@ -29,6 +26,10 @@ int udpSocket;
 int epollFd;
 int timerSocket;
 int erlangFd;
+char *ipBroadcast;
+char *miIp;
+char *dirLocal;
+int puertoTcp;
 
 static void manejar_conn_sock_epoll(ClienteConexion *cliente);
 static int aceptar_listen_sock_epoll(int eventFd);
@@ -94,7 +95,7 @@ void *gestionar_epoll(void *arg) {
 
             if (eventFd == timerSocket) {
                 manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo,
-                              PUERTO_TCP);
+                              puertoTcp, miIp, ipBroadcast);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
                                      contexto, EPOLL_CTL_MOD);
             } else if (eventFd == udpSocket) {
@@ -124,14 +125,34 @@ void *gestionar_epoll(void *arg) {
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 5) {
+        fprintf(stderr,
+                "Uso: %s <MI_IP> <MI_PUERTO_TCP> <IP_BROADCAST> <DIR_LOCAL>\n",
+                argv[0]);
+        fprintf(stderr,
+                "Ejemplo SIMULACION: %s 127.0.0.1 12000 127.255.255.255 "
+                "127.0.0.20\n",
+                argv[0]);
+        fprintf(stderr,
+                "Ejemplo RED REAL:   %s 192.168.0.14 12000 255.255.255.255 "
+                "127.0.0.1\n",
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    miIp = argv[1];
+    puertoTcp = atoi(argv[2]);
+    ipBroadcast = argv[3];
+    dirLocal = argv[4];
+
     tablaNodos = tablanodos_crear(MAX_NODOS);
     tablaJobs = tablajobs_crear();
     recNodo = inicializar_recursos_locales();
 
-    socketEscuchaPublica =
-        crear_nonblocking_listen_socket(PUBLIC_DIR, PUERTO_TCP);
-    socketEscuchaLocal = crear_nonblocking_listen_socket(LOCAL_DIR, PUERTO_TCP);
+    socketEscuchaPublica = crear_nonblocking_listen_socket(miIp, puertoTcp);
+
+    socketEscuchaLocal = crear_nonblocking_listen_socket(dirLocal, puertoTcp);
     udpSocket = crear_socket_udp_broadcast(PUERTO_UDP);
     timerSocket = crear_timer_anuncio(5);
 
@@ -140,9 +161,10 @@ int main() {
     ClienteConexion *ctxUdp =
         crear_cliente(udpSocket, CLIENTE_AGENTE_C, "0.0.0.0", NULL);
     ClienteConexion *ctxPublico =
-        crear_cliente(socketEscuchaPublica, CLIENTE_AGENTE_C, PUBLIC_DIR, NULL);
+        crear_cliente(socketEscuchaPublica, CLIENTE_AGENTE_C, miIp, NULL);
+
     ClienteConexion *ctxLocal =
-        crear_cliente(socketEscuchaLocal, CLIENTE_ERLANG, LOCAL_DIR, NULL);
+        crear_cliente(socketEscuchaLocal, CLIENTE_ERLANG, dirLocal, NULL);
 
     epollFd = epoll_create1(0);
     if (epollFd == -1) {
@@ -154,7 +176,6 @@ int main() {
                          EPOLL_CTL_ADD);
 
     int nproc = cant_nucleos();
-
     pthread_t id[nproc];
 
     printf("Inicio del servidor. Espero dos segundos para escuchar anuncios de "
@@ -164,7 +185,7 @@ int main() {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    anuncio_broadcast(udpSocket, PUERTO_UDP, recNodo, PUERTO_TCP);
+    anuncio_broadcast(PUERTO_UDP, recNodo, puertoTcp, miIp, ipBroadcast);
     agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, ctxUdp,
                          EPOLL_CTL_ADD);
     sleep(2);
