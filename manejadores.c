@@ -366,11 +366,11 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
         buffer_udp[bytes_recibidos] = '\0';
 
         if (strncmp(buffer_udp, "ANNOUNCE", 8) == 0) {
-
             DatosNodo *datos = malloc(sizeof(DatosNodo));
-            if (datos == NULL)
+            if (!datos)
                 return;
 
+            // 1. Extraemos la IP del sobre (cabecera del paquete)
             if (inet_ntop(AF_INET, &(sender_addr.sin_addr), datos->ip,
                           INET_ADDRSTRLEN) == NULL) {
                 perror("inet_ntop fallo al extraer la IP");
@@ -378,12 +378,13 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
                 return;
             }
 
+            // 2. Parseamos la carta (el contenido estricto)
             if (sscanf(buffer_udp, "ANNOUNCE %hu %63[^\n]", &datos->puerto,
                        datos->recursos) == 2) {
 
-                printf("Descubierto nodo activo: IP=%s, Puerto=%hu, "
-                       "Recursos=%s\n",
-                       datos->ip, datos->puerto, datos->recursos);
+                printf(
+                    "Descubierto nodo activo: IP=%s, Puerto=%hu, Recursos=%s\n",
+                    datos->ip, datos->puerto, datos->recursos);
 
                 tablanodos_insertar(tablaNodos, datos);
             } else {
@@ -392,31 +393,53 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
         }
     }
 }
-
 void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
-                   RecursosNodo recNodo, int puertoTcpEscucha) {
+                   RecursosNodo recNodo, int puertoTcpEscucha, const char *miIp,
+                   const char *ip_broadcast) {
     // Vacio el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
-    anuncio_broadcast(udp_sock, puerto_udp, recNodo, puertoTcpEscucha);
+    anuncio_broadcast(puerto_udp, recNodo, puertoTcpEscucha, miIp,
+                      ip_broadcast);
 }
 
-void anuncio_broadcast(int udp_sock, int puerto_udp, RecursosNodo recNodo,
-                       int puertoTcpEscucha) {
+void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
+                       int puertoTcpEscucha, const char *mi_ip,
+                       const char *ip_broadcast) {
+
     char mensaje_anuncio[256];
+
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
              "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puertoTcpEscucha,
              recNodo->cpu->cantDisp, recNodo->mem->cantDisp,
              recNodo->gpu->cantDisp);
 
+    int send_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (send_sock < 0)
+        return;
+
+    int broadcast_enable = 1;
+    setsockopt(send_sock, SOL_SOCKET, SO_BROADCAST, &broadcast_enable,
+               sizeof(broadcast_enable));
+
+    struct sockaddr_in src_addr;
+    memset(&src_addr, 0, sizeof(src_addr));
+    src_addr.sin_family = AF_INET;
+    src_addr.sin_port = 0;
+    inet_pton(AF_INET, mi_ip, &src_addr.sin_addr);
+
+    bind(send_sock, (struct sockaddr *)&src_addr, sizeof(src_addr));
+
     struct sockaddr_in dest_addr;
     memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(puerto_udp);
-    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
+    dest_addr.sin_addr.s_addr = inet_addr(ip_broadcast);
 
-    sendto(udp_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
+    sendto(send_sock, mensaje_anuncio, strlen(mensaje_anuncio), 0,
            (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
-    printf("Anuncio broadcast enviado\n");
+    close(send_sock);
+
+    printf("Anuncio broadcast enviado: %s\n", mi_ip);
 }
