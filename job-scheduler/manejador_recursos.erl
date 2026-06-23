@@ -8,13 +8,14 @@
 
 obtener_y_formatear_nodos() ->
     case send_recv_manager:obtener_nodos() of
-        {ok,Response} -> 
+        {ok,Response} ->
+            logF:log(msg,"Nods ~p ~n",[Response]), 
             Nodes = string:lexemes(Response,";"),
             ParsedNodes = format_nodes(Nodes),
             ParsedNodes;
 
         {error,Razon} -> 
-            logF:log("Error al recibir la lista de nodos, razon:~p ~n",[Razon]),
+            logF:log(msg,"Error al recibir la lista de nodos, razon:~p ~n",[Razon]),
             {error, Razon}
     end.
 
@@ -30,7 +31,7 @@ format_nodes([Node]) ->
             Direccion = #direccion{ip = Ip, puerto = Puerto},
             [{Direccion,Recursos}];
 
-        _ -> logF:log("Error: el orden de la solicitud de recursos no es compatible")
+        _ -> logF:log(msg,"Error: el orden de la solicitud de recursos no es compatible")
         
     end;
 
@@ -43,8 +44,9 @@ format_nodes([Node | Nodes]) ->
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
 obtener_recursos_para_jobs(ParsedNodes) ->
     Nod = [f(X) || X <- ParsedNodes],
+        logF:log(msg,"f(ParsedNodes):~p ~n",[Nod]),
     %%filtramos listas vacías
-    lists:filter(fun(E) -> E /= [] end, h(Nod)).
+    lists:filter(fun(E) -> E /= " " end, h(Nod)).
 
 %% caso base
 f({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
@@ -78,8 +80,8 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
     StrMem = if
         CantMem > 0 -> 
             Before = if
-                StrCpu == "" -> "";
-                true -> " "
+                StrCpu /= "" -> " ";
+                true -> ""
             end,
             Before ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":mem:" ++ integer_to_list(CantMem);
             
@@ -88,9 +90,9 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
     StrGpu = if 
         CantGpu > 0 -> 
             Before1 = if
-                StrCpu == "" -> "";
-                StrMem == "" -> "";
-                true -> " "
+                StrCpu /= "" -> " ";
+                StrMem /= "" -> " ";
+                true -> ""
             end,
             Before1 ++ "@" ++ Ip ++ ":" ++ Puerto ++ ":gpu:" ++ integer_to_list(CantGpu);
         
@@ -103,7 +105,7 @@ f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=Gpu
     
     if
         Rest == [] -> [NodeStr | Rest];
-        true -> [NodeStr ++ " " | Rest]
+        true -> [NodeStr ++ "" | Rest]
     end.
 
 

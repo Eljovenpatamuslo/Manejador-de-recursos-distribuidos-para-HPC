@@ -3,7 +3,7 @@
 %hacer logserver
 
 crear_error_managment() ->
-    Pid = spawn_link(?MODULE,logServer,[]),
+    Pid = spawn(?MODULE,logServer,[]),
     register(log,Pid),
 
     log(msg,"---Log del scheduler de erlang---~n"),
@@ -22,6 +22,7 @@ logServer() ->
             Str = io_lib:format(Msg,Args),
             file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]),
             log(msg,"---Terminando---~n"),
+            timer:sleep(1000),
             exit(fatal)
     end.
 
