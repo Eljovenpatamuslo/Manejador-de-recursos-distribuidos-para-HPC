@@ -15,6 +15,7 @@
 -define(SEC, 1000).
 -define(TIMEOUT, 600 * ?SEC).
 
+%inicia todos los proceso relacionados al envio y recepcion
 send_recv_init(PuertoC) ->
     {ok, SockC} = conectarse_a_nodo_local(PuertoC,?INTENTOS),
     register(sockC,SockC),
@@ -27,6 +28,7 @@ send_recv_init(PuertoC) ->
 
     ok.
 
+%se conecta al agente c y si no logra hacerlo en los intentos ingresados, cierra el programa
 conectarse_a_nodo_local(_,0) ->
     logF:log(fatal,"Se acabaron los intentos, no se pudo establecer coneccion con nodo local~n");
 conectarse_a_nodo_local(PuertoC,Intentos) ->
@@ -40,6 +42,7 @@ conectarse_a_nodo_local(PuertoC,Intentos) ->
             conectarse_a_nodo_local(PuertoC,Intentos-1)
     end.
 
+%proceso que se encarga de obtener todo lo que manda el agente c y mediante mensajes se los envia a quien los necesite
 esperar_respuesta_nodo(SockC) ->
     case gen_tcp:recv(SockC, 0,?TIMEOUT) of     
         {ok, "JOB_GRANTED "++ JobIdn} -> 
@@ -75,6 +78,7 @@ esperar_respuesta_nodo(SockC) ->
             esperar_respuesta_nodo(SockC)
     end.
 
+%proceso que se encarga de enviar al agente c la informacion que sea necesaria
 send_manager(SockC) ->
     receive
         {jobRelease,JobId} -> 
@@ -108,6 +112,7 @@ send_manager(SockC) ->
     end,
     send_manager(SockC).
 
+%funcion para preguntarle al agente de c sobre todos los nodos de la red
 obtener_nodos() ->
     send_manager ! getNodes,
     receive
@@ -120,5 +125,6 @@ obtener_nodos() ->
             obtener_nodos()
     end.
 
+%envia al send_manager lo que este en Msg
 enviar_send(Msg) ->
     send_manager ! Msg.

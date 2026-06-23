@@ -6,6 +6,7 @@
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
 
+%obtiene los nodos del agente c y lo formate de la forma [{recursos,direccion},...]
 obtener_y_formatear_nodos() ->
     case send_recv_manager:obtener_nodos() of
         {ok,Response} ->
@@ -19,6 +20,7 @@ obtener_y_formatear_nodos() ->
             {error, Razon}
     end.
 
+%obtiene los nodos y los separa por : y guarda cada dato
 format_nodes([Node]) -> 
     case string:lexemes(Node,":") of
         [Ip,Puerto,"cpu",Cpu,"mem",Mem,"gpu",Gpu]->

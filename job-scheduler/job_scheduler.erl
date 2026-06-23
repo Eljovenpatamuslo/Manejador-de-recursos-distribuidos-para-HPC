@@ -9,6 +9,7 @@
 -define(SEC, 1000).
 -define(TIME_BEFORE_DOING_MORE_JOBS, 10* ?SEC).
 
+%iniciar todas los modulos y el scheduler en si
 scheduler_init(PuertoC) ->
     ok = logF:crear_error_managment(),
     logF:log(msg,"Log iniciado ~n"),
@@ -22,7 +23,7 @@ scheduler_init(PuertoC) ->
     register(scheduler,self()),
     scheduler().
 
-
+%el scheduler pide los nodos del server, crea trabajos, espera a que esten todos completados, espera un tiempo y vuelve a repetir
 scheduler() ->
     ListaNodos = manejador_recursos:obtener_y_formatear_nodos(),    
     %logF:log(msg,"nodos: ~p~n", [ListaNodos]),
@@ -34,5 +35,6 @@ scheduler() ->
     timer:sleep(?TIME_BEFORE_DOING_MORE_JOBS),
     scheduler().
 
+%obtiene el id de proceso del scheduler
 get_pid_scheduler() ->
     whereis(scheduler).
