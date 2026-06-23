@@ -225,7 +225,6 @@ char *tablanodos_obtener_nodos(TablaNodos tabla) {
     size_t tamanoTotal = 0;
     NodoActivo *actual = tabla->primerNodo;
 
-    // PRIMERA PASADA: Calcular cuántos bytes va a ocupar el string total
     while (actual != NULL) {
         tamanoTotal +=
             strlen(actual->datos->ip) + strlen(actual->datos->recursos) + 20;
@@ -243,36 +242,27 @@ char *tablanodos_obtener_nodos(TablaNodos tabla) {
         return NULL;
     }
 
-    // Puntero auxiliar para escribir directamente en la memoria reservada (O(N)
-    // en vez de O(N^2))
     char *ptr_resultado = resultado;
 
-    // SEGUNDA PASADA: Obtener los datos de los nodos
     actual = tabla->primerNodo;
     char bufferLinea[256];
 
     while (actual != NULL) {
-        // Estructuramos la información del nodo actual en el búfer temporal
         snprintf(bufferLinea, sizeof(bufferLinea), "%s:%u:%s",
                  actual->datos->ip, actual->datos->puerto,
                  actual->datos->recursos);
 
-        // MAGIA AQUÍ: Reemplazamos todos los espacios por ':'
         for (int i = 0; bufferLinea[i] != '\0'; i++) {
             if (bufferLinea[i] == ' ') {
                 bufferLinea[i] = ':';
             }
         }
 
-        // Calculamos cuánto mide esta línea procesada
         int len_linea = strlen(bufferLinea);
 
-        // Copiamos la línea directamente en la posición actual del resultado
-        // final
         memcpy(ptr_resultado, bufferLinea, len_linea);
-        ptr_resultado += len_linea; // Avanzamos el puntero
-
-        // Si hay un nodo siguiente, agregamos el separador ';'
+        ptr_resultado += len_linea; 
+        
         if (actual->sigLista != NULL) {
             *ptr_resultado = ';';
             ptr_resultado++;
@@ -281,7 +271,6 @@ char *tablanodos_obtener_nodos(TablaNodos tabla) {
         actual = actual->sigLista;
     }
 
-    // Cerramos correctamente el string resultante
     *ptr_resultado = '\0';
 
     pthread_mutex_unlock(&tabla->mutex);

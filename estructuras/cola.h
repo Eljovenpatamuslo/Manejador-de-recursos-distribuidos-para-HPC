@@ -22,16 +22,34 @@ typedef struct _Cola {
     GNode *ultimo;
 } *Cola;
 
+/**
+ * Crea una cola vacia.
+ */
 Cola cola_crear();
 
+/**
+ * Destruye la cola y libera la memoria.
+ */
 void cola_destruir(Cola);
 
+/**
+ * Verifica si la cola es vacia.
+ */
 int cola_es_vacia(Cola);
 
+/**
+ * Retorna el primer elemento de la cola.
+ */
 void *cola_inicio(Cola);
 
+/**
+ * Encola el elemento dado en la cola.
+ */
 void cola_encolar(Cola, void *);
 
+/**
+ * Desencola el primer elemento de la cola.
+ */
 void cola_desencolar(Cola);
 
 #endif
