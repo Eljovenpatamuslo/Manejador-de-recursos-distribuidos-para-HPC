@@ -280,9 +280,10 @@ ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId) {
 
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
+        JobActivo *sig = actual->sigJobId;
+
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL) {
-            struct _NodoResultado *nuevoNodo =
-                malloc(sizeof(struct _NodoResultado));
+            struct _NodoResultado *nuevoNodo = malloc(sizeof(struct _NodoResultado));
             assert(nuevoNodo != NULL);
 
             nuevoNodo->datos = actual->datos;
@@ -295,7 +296,8 @@ ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId) {
 
             free(actual);
         }
-        actual = actual->sigJobId;
+
+        actual = sig;
     }
 
     pthread_mutex_unlock(&tabla->mutex);
