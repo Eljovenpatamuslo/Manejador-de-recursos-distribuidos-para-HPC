@@ -1,2 +1,0 @@
-Inicializar estructuras, incluyendo mis propios recursos.
-Actualizar mis estructuras con los announces recibidos.
