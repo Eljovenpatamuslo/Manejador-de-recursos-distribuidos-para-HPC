@@ -36,6 +36,7 @@ conectarse_a_nodo_local(PuertoC,Intentos) ->
             {ok,SockC};
         {error,Razon} -> 
             logF:log(msg,"Error al conectarse al nodo, razon:~p , intentando otra vez...~n",[Razon]),
+            timer:sleep(?SEC),
             conectarse_a_nodo_local(PuertoC,Intentos-1)
     end.
 
@@ -56,8 +57,8 @@ esperar_respuesta_nodo(SockC) ->
             job_server:enviar_estado_job(jobTimeout,JobId),
 
             esperar_respuesta_nodo(SockC);
-        {ok,"NODES " ++ Nodesn} -> 
-            Nodes = string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
+        {ok,Nodesn} -> 
+            Nodes = Nodesn,%string:reverse(string:prefix(string:reverse(Nodesn),"\n")),
             case job_scheduler:get_pid_scheduler() of
                 undefined -> 
                     %% Si el scheduler ya no existe (ej. fin de test), lo ignoramos
@@ -116,7 +117,7 @@ obtener_nodos() ->
             {error,Razon};
         M ->
             logF:log(msg,"Error, mensaje: ~p inesperado ~n",[M]),
-            logF:cerrar_todo()
+            obtener_nodos()
     end.
 
 enviar_send(Msg) ->

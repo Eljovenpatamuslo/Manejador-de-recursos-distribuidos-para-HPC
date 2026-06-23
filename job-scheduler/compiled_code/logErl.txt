@@ -10,3 +10,406 @@ Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
 Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
 Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
 Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,18,46}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,18,49}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,18,55}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,19,11}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,21,42}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Error, mensaje: {ok,"192.168.1.112:12000:cpu:12 mem:15887 gpu:1"} inesperado 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,25,46}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,34,8}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,36,6}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,37,24}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,39,7}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,39,53}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,41,44}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+---Log del scheduler de erlang---
+---Log del scheduler de erlang---
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,46,21}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,48,49}] 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,49,0}] 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,49,22}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Error: el orden de la solicitud de recursos no es compatible
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,51,0}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Error: el orden de la solicitud de recursos no es compatible
+Error: el orden de la solicitud de recursos no es compatible
+Error: el orden de la solicitud de recursos no es compatible
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,56,36}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12 mem:15887 gpu:1" 
+Error: el orden de la solicitud de recursos no es compatible
+Error: el orden de la solicitud de recursos no es compatible
+Error: el orden de la solicitud de recursos no es compatible
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{21,59,41}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 69] Solicitando los recursos: "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:527"
+[Job 133] Solicitando los recursos: "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:2048 "
+[Job 197] Solicitando los recursos: "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:1024 "
+[Job 261] Solicitando los recursos: "@192.168.1.112:12000:cpu:5 @192.168.1.112:12000:mem:12288 @192.168.1.112:12000:gpu:1 "
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,3,13}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 2374] Solicitando los recursos: " @192.168.1.112:12000:gpu:1@192.168.1.112:12000:cpu:7@192.168.1.112:12000:cpu:7 "
+[Job 2438] Solicitando los recursos: " "
+[Job 2502] Solicitando los recursos: "@192.168.1.112:12000:cpu:2@192.168.1.112:12000:cpu:2 "
+[Job 2566] Solicitando los recursos: "@192.168.1.112:12000:cpu:3@192.168.1.112:12000:cpu:3 "
+[Job 2630] Solicitando los recursos: " "
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,5,51}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 2370] Solicitando los recursos: " @192.168.1.112:12000:gpu:1@192.168.1.112:12000:cpu:11@192.168.1.112:12000:cpu:11 "
+[Job 2434] Solicitando los recursos: "@192.168.1.112:12000:cpu:1@192.168.1.112:12000:cpu:1 "
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,7,37}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+Error al recibir mensaje del nodo, razon:closed 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,8,32}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 69] Solicitando los recursos: 54
+[Job 133] Solicitando los recursos: 57
+[Job 197] Solicitando los recursos: 32
+[Job 261] Solicitando los recursos: 50
+[Job 325] Solicitando los recursos: 117
+[Job 389] Solicitando los recursos: 56
+[Job 453] Solicitando los recursos: 49
+[Job 517] Solicitando los recursos: 117
+[Job 581] Solicitando los recursos: 49
+[Job 645] Solicitando los recursos: 58
+[Job 709] Solicitando los recursos: 117
+[Job 773] Solicitando los recursos: 50
+[Job 837] Solicitando los recursos: 58
+[Job 901] Solicitando los recursos: 112
+[Job 965] Solicitando los recursos: 49
+[Job 1029] Solicitando los recursos: 49
+[Job 1093] Solicitando los recursos: 48
+[Job 1157] Solicitando los recursos: 58
+[Job 4997] Solicitando los recursos: 48
+[Job 1221] Solicitando los recursos: 50
+[Job 5061] Solicitando los recursos: 54
+[Job 1285] Solicitando los recursos: 50
+[Job 5125] Solicitando los recursos: 49
+[Job 1349] Solicitando los recursos: 54
+[Job 1413] Solicitando los recursos: 56
+[Job 5189] Solicitando los recursos: 57
+[Job 1477] Solicitando los recursos: 54
+[Job 1541] Solicitando los recursos: 49
+[Job 1605] Solicitando los recursos: 48
+[Job 5253] Solicitando los recursos: 49
+[Job 1669] Solicitando los recursos: 49
+[Job 5317] Solicitando los recursos: 50
+[Job 5381] Solicitando los recursos: 49
+[Job 5445] Solicitando los recursos: 49
+[Job 5509] Solicitando los recursos: 99
+[Job 5573] Solicitando los recursos: 58
+[Job 5637] Solicitando los recursos: 49
+[Job 1733] Solicitando los recursos: 49
+[Job 5701] Solicitando los recursos: 58
+[Job 1797] Solicitando los recursos: 50
+[Job 5765] Solicitando los recursos: 58
+[Job 1861] Solicitando los recursos: 64
+[Job 5829] Solicitando los recursos: 46
+[Job 1925] Solicitando los recursos: 56
+[Job 1989] Solicitando los recursos: 46
+[Job 5893] Solicitando los recursos: 49
+[Job 2053] Solicitando los recursos: 49
+[Job 5957] Solicitando los recursos: 46
+[Job 2117] Solicitando los recursos: 50
+[Job 6021] Solicitando los recursos: 58
+[Job 2181] Solicitando los recursos: 57
+[Job 6085] Solicitando los recursos: 48
+[Job 2245] Solicitando los recursos: 112
+[Job 3653] Solicitando los recursos: 46
+[Job 3717] Solicitando los recursos: 48
+[Job 2309] Solicitando los recursos: 49
+[Job 3781] Solicitando los recursos: 48
+[Job 3845] Solicitando los recursos: 50
+[Job 2373] Solicitando los recursos: 50
+[Job 6149] Solicitando los recursos: 46
+[Job 3909] Solicitando los recursos: 99
+[Job 2437] Solicitando los recursos: 58
+[Job 3973] Solicitando los recursos: 46
+[Job 4037] Solicitando los recursos: 32
+[Job 2501] Solicitando los recursos: 58
+[Job 6213] Solicitando los recursos: 99
+[Job 6277] Solicitando los recursos: 49
+[Job 4101] Solicitando los recursos: 32
+[Job 6341] Solicitando los recursos: 48
+[Job 6405] Solicitando los recursos: 99
+[Job 4165] Solicitando los recursos: 112
+[Job 6469] Solicitando los recursos: 57
+[Job 2565] Solicitando los recursos: 49
+[Job 4229] Solicitando los recursos: 117
+[Job 6533] Solicitando los recursos: 56
+[Job 2629] Solicitando los recursos: 46
+[Job 6597] Solicitando los recursos: 49
+[Job 4293] Solicitando los recursos: 46
+[Job 4357] Solicitando los recursos: 49
+[Job 6661] Solicitando los recursos: 49
+[Job 4421] Solicitando los recursos: 48
+[Job 2693] Solicitando los recursos: 50
+[Job 6725] Solicitando los recursos: 57
+[Job 4485] Solicitando los recursos: 48
+[Job 6789] Solicitando los recursos: 58
+[Job 4549] Solicitando los recursos: 48
+[Job 2757] Solicitando los recursos: 50
+[Job 2821] Solicitando los recursos: 46
+[Job 4613] Solicitando los recursos: 50
+[Job 6853] Solicitando los recursos: 50
+[Job 4677] Solicitando los recursos: 49
+[Job 2885] Solicitando los recursos: 58
+[Job 4741] Solicitando los recursos: 64
+[Job 2949] Solicitando los recursos: 49
+[Job 4805] Solicitando los recursos: 49
+[Job 6917] Solicitando los recursos: 58
+[Job 4869] Solicitando los recursos: 117
+[Job 3013] Solicitando los recursos: 46
+[Job 6981] Solicitando los recursos: 58
+[Job 4933] Solicitando los recursos: 48
+[Job 3077] Solicitando los recursos: 49
+[Job 7045] Solicitando los recursos: 49
+[Job 7109] Solicitando los recursos: 46
+[Job 7173] Solicitando los recursos: 49
+[Job 7941] Solicitando los recursos: 64
+[Job 7237] Solicitando los recursos: 103
+[Job 7301] Solicitando los recursos: 49
+[Job 8005] Solicitando los recursos: 32
+[Job 7365] Solicitando los recursos: 56
+[Job 8069] Solicitando los recursos: 48
+[Job 3141] Solicitando los recursos: 64
+[Job 7429] Solicitando los recursos: 46
+[Job 3205] Solicitando los recursos: 49
+[Job 7493] Solicitando los recursos: 64
+[Job 7557] Solicitando los recursos: 48
+[Job 3269] Solicitando los recursos: 49
+[Job 8133] Solicitando los recursos: 49
+[Job 3333] Solicitando los recursos: 49
+[Job 7621] Solicitando los recursos: 46
+[Job 8197] Solicitando los recursos: 112
+[Job 7685] Solicitando los recursos: 46
+[Job 3397] Solicitando los recursos: 49
+[Job 8261] Solicitando los recursos: 46
+[Job 3461] Solicitando los recursos: 49
+[Job 7749] Solicitando los recursos: 48
+[Job 7813] Solicitando los recursos: 49
+[Job 3525] Solicitando los recursos: 50
+[Job 7877] Solicitando los recursos: 49
+[Job 8325] Solicitando los recursos: 49
+[Job 8389] Solicitando los recursos: 58
+[Job 8453] Solicitando los recursos: 58
+[Job 8517] Solicitando los recursos: 49
+[Job 3589] Solicitando los recursos: 50
+[Job 8581] Solicitando los recursos: 48
+[Job 8645] Solicitando los recursos: 54
+[Job 8709] Solicitando los recursos: 112
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,9,31}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 2370] Solicitando los recursos: " @192.168.1.112:12000:gpu:1@192.168.1.112:12000:cpu:3@192.168.1.112:12000:cpu:3 "
+[Job 2434] Solicitando los recursos: "@192.168.1.112:12000:cpu:3@192.168.1.112:12000:cpu:3 "
+[Job 2498] Solicitando los recursos: "@192.168.1.112:12000:cpu:6@192.168.1.112:12000:cpu:6 "
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,11,48}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+[Job 2372] Solicitando los recursos: "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:1024 "
+[Job 2436] Solicitando los recursos: "@192.168.1.112:12000:cpu:5 @192.168.1.112:12000:mem:2048 "
+[Job 2500] Solicitando los recursos: "@192.168.1.112:12000:cpu:2 @192.168.1.112:12000:mem:527"
+[Job 2564] Solicitando los recursos: "@192.168.1.112:12000:cpu:2 @192.168.1.112:12000:mem:12288 @192.168.1.112:12000:gpu:1 "
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,15,45}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+f(ParsedNodes):[["@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:3072 @192.168.1.112:12000:gpu:1 ",
+                 "@192.168.1.112:12000:cpu:11 @192.168.1.112:12000:mem:5120 ",
+                 "@192.168.1.112:12000:mem:6144 ",
+                 "@192.168.1.112:12000:mem:1024 ",
+                 "@192.168.1.112:12000:mem:527"]] 
+[Job 67] Solicitando los recursos: "@192.168.1.112:12000:mem:527"
+[Job 131] Solicitando los recursos: "@192.168.1.112:12000:cpu:11 @192.168.1.112:12000:mem:5120 "
+[Job 195] Solicitando los recursos: "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:3072 @192.168.1.112:12000:gpu:1 "
+[Job 259] Solicitando los recursos: "@192.168.1.112:12000:mem:1024 "
+[Job 323] Solicitando los recursos: "@192.168.1.112:12000:mem:6144 "
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,17,45}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+f(ParsedNodes):[["@192.168.1.112:12000:cpu:11@192.168.1.112:12000:mem:2048@192.168.1.112:12000:gpu:1 ",
+                 "@192.168.1.112:12000:cpu:1@192.168.1.112:12000:mem:2048 ",
+                 "@192.168.1.112:12000:mem:8192 ",
+                 "@192.168.1.112:12000:mem:2048 ",
+                 "@192.168.1.112:12000:mem:1024 ",
+                 "@192.168.1.112:12000:mem:527"]] 
+[Job 2372] Solicitando los recursos: "@192.168.1.112:12000:cpu:11@192.168.1.112:12000:mem:2048@192.168.1.112:12000:gpu:1 "
+[Job 2436] Solicitando los recursos: "@192.168.1.112:12000:mem:2048 "
+[Job 2500] Solicitando los recursos: "@192.168.1.112:12000:mem:1024 "
+[Job 2564] Solicitando los recursos: "@192.168.1.112:12000:mem:8192 "
+[Job 2628] Solicitando los recursos: "@192.168.1.112:12000:mem:527"
+[Job 2692] Solicitando los recursos: "@192.168.1.112:12000:cpu:1@192.168.1.112:12000:mem:2048 "
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,22}] hora: [{22,19,29}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Nods "192.168.1.112:12000:cpu:12:mem:15887:gpu:1" 
+f(ParsedNodes):[["@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:3072 @192.168.1.112:12000:gpu:1",
+                 "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:10240",
+                 "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:1024",
+                 "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:1024",
+                 "@192.168.1.112:12000:cpu:4 @192.168.1.112:12000:mem:527"]] 
+[Job 2381] Solicitando los recursos: "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:3072 @192.168.1.112:12000:gpu:1"
+[Job 2573] Solicitando los recursos: "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:1024"
+[Job 2637] Solicitando los recursos: "@192.168.1.112:12000:cpu:3 @192.168.1.112:12000:mem:1024"
+[Job 2445] Solicitando los recursos: "@192.168.1.112:12000:cpu:4 @192.168.1.112:12000:mem:527"
+[Job 2509] Solicitando los recursos: "@192.168.1.112:12000:cpu:1 @192.168.1.112:12000:mem:10240"
+Error al recibir mensaje del nodo, razon:timeout 

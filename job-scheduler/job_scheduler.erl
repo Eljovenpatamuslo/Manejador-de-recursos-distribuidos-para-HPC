@@ -25,7 +25,7 @@ scheduler_init(PuertoC) ->
 
 scheduler() ->
     ListaNodos = manejador_recursos:obtener_y_formatear_nodos(),    
-    logF:log("nodos: ~p~n", [ListaNodos]),
+    %logF:log(msg,"nodos: ~p~n", [ListaNodos]),
     Recursos = manejador_recursos:obtener_recursos_para_jobs(ListaNodos),
     lists:foreach(fun(Recurso) -> job_server:crear_job(Recurso) end,Recursos),
     receive
