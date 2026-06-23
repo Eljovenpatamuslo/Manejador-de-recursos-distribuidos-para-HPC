@@ -68,12 +68,24 @@ void tablanodos_borrar_expirados(TablaNodos tablaNodos, TablaJobs tablaJobs,
  */
 void tablanodos_redimensionar(TablaNodos tabla);
 
+/**
+ * Desconecta el nodo de la tabla de nodos.
+ */
 void desconectar_nodo(TablaNodos tabla, NodoActivo *nodo);
 
+/**
+ * Compara si los nodos coinciden en la ip.
+ */
 int comp_nodos(const DatosNodo *a, const DatosNodo *b);
 
+/**
+ * Busca un nodo por su ip y retorna sus datos.
+ */
 DatosNodo *tablanodos_buscar(TablaNodos tabla, char ip[]);
 
+/**
+ * Retorna un string que contiene los datos de todos los nodos de la tabla. 
+ */
 char *tablanodos_obtener_nodos(TablaNodos tabla);
 
 #endif /* __TABLANODOS_H__ */
