@@ -49,12 +49,14 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
     JobActivo *actual = tabla->tablaPorId[idx];
     while (actual != NULL) {
         if (actual->datos->jobId == datos->jobId) {
+            int flag = 0;
             if (actual->datos->rol == JOB_REMOTO && datos->rol == JOB_REMOTO) {
 
                 actual->datos->recReservados->cpu += datos->recReservados->cpu;
                 actual->datos->recReservados->mem += datos->recReservados->mem;
                 actual->datos->recReservados->gpu += datos->recReservados->gpu;
 
+                flag = 1;
             } else if (actual->datos->rol == JOB_LOCAL &&
                        datos->rol == JOB_LOCAL &&
                        strcmp(actual->datos->nodoIp, datos->nodoIp) == 0 &&
@@ -67,16 +69,18 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
                 actual->datos->recPedidos->cpu += datos->recPedidos->cpu;
                 actual->datos->recPedidos->mem += datos->recPedidos->mem;
                 actual->datos->recPedidos->gpu += datos->recPedidos->gpu;
-            } else {
-                continue;
+
+                flag = 1;
             }
 
-            pthread_mutex_unlock(&tabla->mutex);
+            if (flag) {
+                pthread_mutex_unlock(&tabla->mutex);
 
-            free(datos->recPedidos);
-            free(datos->recReservados);
-            free(datos);
-            return; // No hay que agregar nuevos jobs
+                free(datos->recPedidos);
+                free(datos->recReservados);
+                free(datos);
+                return; // No hay que agregar nuevos jobs
+            }
         }
         actual = actual->sigJobId;
     }
@@ -127,6 +131,10 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
             puerto == actual->datos->nodoPuerto) {
             desconectar_job(tabla, actual);
             tabla->cantJobs--;
+
+            actual->antJobId = NULL;
+            actual->antJobNodo = NULL;
+            actual->sigJobNodo = NULL;
 
             actual->sigJobId = jobsABorrar;
             jobsABorrar = actual;
