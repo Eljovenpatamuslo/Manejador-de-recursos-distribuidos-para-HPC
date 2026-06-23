@@ -248,6 +248,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 void liberar_job(TablaJobs tablaJobs, unsigned long jobId) {
     debug("ENTRO");
     ListaResultados lista = tablajobs_release_job(tablaJobs, jobId);
+    printf("SALGO\n");
     debug("SALGO");
     struct _NodoResultado *actual = lista;
 
@@ -343,7 +344,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                cliente->fd);
         tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
         char *nodos = tablanodos_obtener_nodos(tablaNodos);
-        enviar_formateado(cliente->fd, "%s", nodos);
+        enviar_formateado(cliente->fd, "NODES %s", nodos);
     }
 
     else if (strncmp(mensaje, "JOB_RELEASE", 11) == 0) {

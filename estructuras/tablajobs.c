@@ -1,6 +1,7 @@
 #include "tablajobs.h"
 #include "recursos.h"
 
+#define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 TablaJobs tablajobs_crear() {
     TablaJobs tabla = malloc(sizeof(struct _TablaJobs));
     assert(tabla != NULL);
@@ -283,7 +284,8 @@ ListaResultados tablajobs_release_job(TablaJobs tabla, unsigned long jobId) {
         JobActivo *sig = actual->sigJobId;
 
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL) {
-            struct _NodoResultado *nuevoNodo = malloc(sizeof(struct _NodoResultado));
+            struct _NodoResultado *nuevoNodo =
+                malloc(sizeof(struct _NodoResultado));
             assert(nuevoNodo != NULL);
 
             nuevoNodo->datos = actual->datos;
@@ -329,6 +331,11 @@ void desconectar_job(TablaJobs tabla, JobActivo *job) {
     if (job->sigJobNodo != NULL) {
         job->sigJobNodo->antJobNodo = job->antJobNodo;
     }
+
+    job->antJobNodo = NULL;
+    job->sigJobNodo = NULL;
+    job->antJobId = NULL;
+    job->sigJobId = NULL;
 }
 
 void liberar_memoria_job(JobActivo *job) {
