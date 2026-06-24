@@ -300,7 +300,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
 
                 DatosNodo *datos = tablanodos_buscar(tablaNodos, ip);
                 if (datos != NULL) {
-                    printf("puerto: %d", datos->puerto);
                     int fdSalida =
                         crear_socket_saliente_nobloqueante(ip, datos->puerto);
 

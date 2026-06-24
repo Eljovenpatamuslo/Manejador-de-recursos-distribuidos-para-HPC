@@ -183,3 +183,52 @@ nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
 [Job 1538] Terminado correctamente.
 [Job 1634] Procesamiento completado. Liberando infraestructura.
 [Job 1634] Terminado correctamente.
+---Log del scheduler de erlang---
+fecha: [{2026,6,24}] hora: [{14,22,34}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1187] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1219] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1251] Solicitando los recursos: "@192.168.0.14:cpu:4 @192.168.0.14:mem:12288 @192.168.0.14:gpu:1"
+[Job 1187] EXITO! Todos los recursos concedidos.
+[Job 1187] Ejecutando procesamiento en el cluster simulado...
+[Job 1219] EXITO! Todos los recursos concedidos.
+[Job 1219] Ejecutando procesamiento en el cluster simulado...
+[Job 1251] EXITO! Todos los recursos concedidos.
+[Job 1251] Ejecutando procesamiento en el cluster simulado...
+[Job 1187] Procesamiento completado. Liberando infraestructura.
+[Job 1187] Terminado correctamente.
+[Job 1219] Procesamiento completado. Liberando infraestructura.
+[Job 1219] Terminado correctamente.
+[Job 1251] Procesamiento completado. Liberando infraestructura.
+[Job 1251] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1283] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1315] Solicitando los recursos: "@192.168.0.14:mem:2048"
+[Job 1347] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:5120 @192.168.0.14:gpu:1"
+[Job 1379] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:5120"
+[Job 1411] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1283] EXITO! Todos los recursos concedidos.
+[Job 1283] Ejecutando procesamiento en el cluster simulado...
+[Job 1347] EXITO! Todos los recursos concedidos.
+[Job 1347] Ejecutando procesamiento en el cluster simulado...
+[Job 1379] EXITO! Todos los recursos concedidos.
+[Job 1379] Ejecutando procesamiento en el cluster simulado...
+[Job 1283] Procesamiento completado. Liberando infraestructura.
+[Job 1283] Terminado correctamente.
+[Job 1347] Procesamiento completado. Liberando infraestructura.
+[Job 1347] Terminado correctamente.
+[Job 1379] Procesamiento completado. Liberando infraestructura.
+[Job 1379] Terminado correctamente.
+Error al recibir mensaje del nodo, razon:timeout 
