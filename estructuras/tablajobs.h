@@ -26,6 +26,7 @@ typedef struct _DatosJob {
     void *datosCliente;
     char nodoIp[16];
     unsigned short nodoPuerto;
+    TipoRecurso recursoPedido;
     RecursosReservados recReservados;
     RecursosReservados recPedidos;
 } DatosJob;
@@ -106,7 +107,7 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
  * a un nodo remoto.
  */
 void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
-                               unsigned short puerto);
+                               unsigned short puerto, TipoRecurso rec);
 
 /**
  * Libera los recursos asociados al job. Retorna una lista de todas las reservas
