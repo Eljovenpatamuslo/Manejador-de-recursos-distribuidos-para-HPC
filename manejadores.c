@@ -244,8 +244,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 }
 
 void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
-    ListaResultados lista = tablajobs_release_job(tablaJobs, jobId);
-    struct _NodoResultado *actual = lista;
+    ListaResultados actual = tablajobs_release_job(tablaJobs, jobId);
 
     while (actual != NULL) {
         debug("ENTRO");
@@ -254,7 +253,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
                actual->datos->recReservados->mem,
                actual->datos->recReservados->gpu);
         char rec[4];
-        int cant;
+        int cant = 0;
         if (actual->datos->recReservados->cpu > 0) {
             strcpy(rec, "cpu");
             cant = actual->datos->recReservados->cpu;
@@ -264,9 +263,8 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
         } else if (actual->datos->recReservados->gpu > 0) {
             strcpy(rec, "gpu");
             cant = actual->datos->recReservados->gpu;
-        } else {
-            continue;
         }
+
         int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
         enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
 
