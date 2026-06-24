@@ -1,5 +1,4 @@
 #include "manejadores.h"
-#include "estructuras/utils.h"
 
 #define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 
@@ -206,7 +205,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 
             DatosNodo *datos = tablanodos_buscar(tablaNodos, cliente->ip);
             tablajobs_recurso_granted(tablaJobs, jobId, cliente->ip,
-                                      datos->puerto);
+                                      datos->puerto, cliente->tipoRec);
 
             if (tablajobs_job_granted(tablaJobs, jobId)) {
                 enviar_formateado(erlangFd, "JOB_GRANTED %lu\n", jobId);
@@ -249,6 +248,11 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
     struct _NodoResultado *actual = lista;
 
     while (actual != NULL) {
+        debug("ENTRO");
+        printf("liberar cpu:%u mem:%lu gpu:%u\n",
+               actual->datos->recReservados->cpu,
+               actual->datos->recReservados->mem,
+               actual->datos->recReservados->gpu);
         char rec[4];
         int cant;
         if (actual->datos->recReservados->cpu > 0) {
@@ -306,12 +310,15 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                     ClienteConexion *nueva_conexion =
                         crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
 
-                    registrar_solicitud_propia(
-                        tablaJobs, jobId, tipo_recurso_desde_string(recurso),
-                        cantidad, ip, datos->puerto, nueva_conexion);
+                    int tipoRec = tipo_recurso_desde_string(recurso);
+
+                    registrar_solicitud_propia(tablaJobs, jobId, tipoRec,
+                                               cantidad, ip, datos->puerto,
+                                               nueva_conexion);
 
                     snprintf(nueva_conexion->mensaje, 256,
                              "RESERVE %lu %s %d\n", jobId, recurso, cantidad);
+                    nueva_conexion->tipoRec = tipoRec;
 
                     // Cuando se arme la conexion se enviara el mensaje guardado
                     // en la estructura

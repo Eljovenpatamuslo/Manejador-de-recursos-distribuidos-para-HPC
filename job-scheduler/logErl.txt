@@ -232,3 +232,80 @@ nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
 [Job 1379] Procesamiento completado. Liberando infraestructura.
 [Job 1379] Terminado correctamente.
 Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,24}] hora: [{14,36,5}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1475] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1507] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1539] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1571] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:4096 @192.168.0.14:gpu:1"
+[Job 1603] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:7168"
+[Job 1475] EXITO! Todos los recursos concedidos.
+[Job 1475] Ejecutando procesamiento en el cluster simulado...
+[Job 1507] EXITO! Todos los recursos concedidos.
+[Job 1507] Ejecutando procesamiento en el cluster simulado...
+[Job 1539] EXITO! Todos los recursos concedidos.
+[Job 1539] Ejecutando procesamiento en el cluster simulado...
+[Job 1571] EXITO! Todos los recursos concedidos.
+[Job 1571] Ejecutando procesamiento en el cluster simulado...
+[Job 1603] EXITO! Todos los recursos concedidos.
+[Job 1603] Ejecutando procesamiento en el cluster simulado...
+[Job 1475] Procesamiento completado. Liberando infraestructura.
+[Job 1475] Terminado correctamente.
+[Job 1507] Procesamiento completado. Liberando infraestructura.
+[Job 1507] Terminado correctamente.
+[Job 1539] Procesamiento completado. Liberando infraestructura.
+[Job 1539] Terminado correctamente.
+[Job 1571] Procesamiento completado. Liberando infraestructura.
+[Job 1571] Terminado correctamente.
+[Job 1603] Procesamiento completado. Liberando infraestructura.
+[Job 1603] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1635] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:566"
+[Job 1667] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:12288 @192.168.0.14:gpu:1"
+[Job 1699] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1635] EXITO! Todos los recursos concedidos.
+[Job 1635] Ejecutando procesamiento en el cluster simulado...
+[Job 1667] EXITO! Todos los recursos concedidos.
+[Job 1667] Ejecutando procesamiento en el cluster simulado...
+[Job 1699] EXITO! Todos los recursos concedidos.
+[Job 1699] Ejecutando procesamiento en el cluster simulado...
+[Job 1635] Procesamiento completado. Liberando infraestructura.
+[Job 1635] Terminado correctamente.
+[Job 1667] Procesamiento completado. Liberando infraestructura.
+[Job 1667] Terminado correctamente.
+[Job 1699] Procesamiento completado. Liberando infraestructura.
+[Job 1699] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1731] Solicitando los recursos: "@192.168.0.14:mem:4096"
+[Job 1763] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1795] Solicitando los recursos: "@192.168.0.14:mem:6144"
+[Job 1827] Solicitando los recursos: "@192.168.0.14:cpu:4 @192.168.0.14:mem:3072 @192.168.0.14:gpu:1"
+[Job 1827] EXITO! Todos los recursos concedidos.
+[Job 1827] Ejecutando procesamiento en el cluster simulado...
+[Job 1827] Procesamiento completado. Liberando infraestructura.
+[Job 1827] Terminado correctamente.
+[Job 1315] ERROR CRITICO: Timeout interno del planificador.
+[Job 1315] Respetando backoff de 390 ms para mitigar contención.
+[Job 1411] ERROR CRITICO: Timeout interno del planificador.
+[Job 1411] Respetando backoff de 579 ms para mitigar contención.
+[Job 1315] Reiniciando ciclo de peticiones (Intento 1).
+[Job 1315] Solicitando los recursos: "@192.168.0.14:mem:2048"
+[Job 1411] Reiniciando ciclo de peticiones (Intento 1).
+[Job 1411] Solicitando los recursos: "@192.168.0.14:mem:566"

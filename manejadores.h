@@ -28,6 +28,7 @@ typedef struct {
     int bytes_in_buffer;
     char ip[16];
     char mensaje[256];
+    TipoRecurso tipoRec;
 } ClienteConexion;
 
 /*
