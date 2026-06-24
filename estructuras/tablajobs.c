@@ -57,21 +57,6 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
                 actual->datos->recReservados->gpu += datos->recReservados->gpu;
 
                 flag = 1;
-            } else if (actual->datos->rol == JOB_LOCAL &&
-                       datos->rol == JOB_LOCAL &&
-                       strcmp(actual->datos->nodoIp, datos->nodoIp) == 0 &&
-                       actual->datos->nodoPuerto == datos->nodoPuerto &&
-                       actual->datos->recursoPedido == datos->recursoPedido) {
-
-                actual->datos->recReservados->cpu += datos->recReservados->cpu;
-                actual->datos->recReservados->mem += datos->recReservados->mem;
-                actual->datos->recReservados->gpu += datos->recReservados->gpu;
-
-                actual->datos->recPedidos->cpu += datos->recPedidos->cpu;
-                actual->datos->recPedidos->mem += datos->recPedidos->mem;
-                actual->datos->recPedidos->gpu += datos->recPedidos->gpu;
-
-                flag = 1;
             }
 
             if (flag) {
@@ -267,7 +252,8 @@ void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
     while (actual != NULL) {
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
             strcmp(actual->datos->nodoIp, ip) == 0 &&
-            actual->datos->nodoPuerto == puerto) {
+            actual->datos->nodoPuerto == puerto &&
+            actual->datos->recursoPedido == rec) {
 
             if (rec == CPU) {
                 actual->datos->recReservados->cpu =
