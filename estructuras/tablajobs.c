@@ -61,7 +61,7 @@ void tablajobs_insertar(TablaJobs tabla, DatosJob *datos) {
                        datos->rol == JOB_LOCAL &&
                        strcmp(actual->datos->nodoIp, datos->nodoIp) == 0 &&
                        actual->datos->nodoPuerto == datos->nodoPuerto &&
-                       actual->datos->recPedidos == datos->recPedidos) {
+                       actual->datos->recursoPedido == datos->recursoPedido) {
 
                 actual->datos->recReservados->cpu += datos->recReservados->cpu;
                 actual->datos->recReservados->mem += datos->recReservados->mem;
@@ -245,7 +245,7 @@ void registrar_solicitud_propia(TablaJobs tablaJobs, unsigned long jobId,
     nuevosDatos->recPedidos->cpu = rec == CPU ? cant : 0;
     nuevosDatos->recPedidos->mem = rec == MEM ? cant : 0;
     nuevosDatos->recPedidos->gpu = rec == GPU ? cant : 0;
-    
+
     nuevosDatos->recursoPedido = rec;
 
     // Inicializamos como pendiente los recursos reservados
@@ -268,13 +268,16 @@ void tablajobs_recurso_granted(TablaJobs tabla, unsigned long jobId, char ip[],
         if (actual->datos->jobId == jobId && actual->datos->rol == JOB_LOCAL &&
             strcmp(actual->datos->nodoIp, ip) == 0 &&
             actual->datos->nodoPuerto == puerto) {
-            
+
             if (rec == CPU) {
-                actual->datos->recReservados->cpu = actual->datos->recPedidos->cpu;
+                actual->datos->recReservados->cpu =
+                    actual->datos->recPedidos->cpu;
             } else if (rec == MEM) {
-                actual->datos->recReservados->mem = actual->datos->recPedidos->mem;
+                actual->datos->recReservados->mem =
+                    actual->datos->recPedidos->mem;
             } else if (rec == GPU) {
-                actual->datos->recReservados->gpu = actual->datos->recPedidos->gpu;
+                actual->datos->recReservados->gpu =
+                    actual->datos->recPedidos->gpu;
             }
             break;
         }
