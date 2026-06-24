@@ -1,4 +1,5 @@
 #include "manejadores.h"
+#include "estructuras/utils.h"
 
 #define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 
@@ -411,9 +412,8 @@ void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
     char mensaje_anuncio[256];
 
     snprintf(mensaje_anuncio, sizeof(mensaje_anuncio),
-             "ANNOUNCE %d cpu:%lu mem:%lu gpu:%lu\n", puertoTcpEscucha,
-             recNodo->cpu->cantDisp, recNodo->mem->cantDisp,
-             recNodo->gpu->cantDisp);
+             "ANNOUNCE %d cpu:%u mem:%lu gpu:%u\n", puertoTcpEscucha,
+             obtener_cpus(), obtener_mem(), obtener_gpus());
 
     int send_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (send_sock < 0)

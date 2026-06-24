@@ -58,3 +58,128 @@ send_recv_manager iniciado
 job_server iniciado
 1
 2
+---Log del scheduler de erlang---
+fecha: [{2026,6,24}] hora: [{13,51,47}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1188] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:1024"
+[Job 1220] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:12288 @192.168.0.14:gpu:1"
+[Job 1252] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1188] EXITO! Todos los recursos concedidos.
+[Job 1188] Ejecutando procesamiento en el cluster simulado...
+[Job 1220] EXITO! Todos los recursos concedidos.
+[Job 1220] Ejecutando procesamiento en el cluster simulado...
+[Job 1252] EXITO! Todos los recursos concedidos.
+[Job 1252] Ejecutando procesamiento en el cluster simulado...
+[Job 1188] Procesamiento completado. Liberando infraestructura.
+[Job 1188] Terminado correctamente.
+[Job 1220] Procesamiento completado. Liberando infraestructura.
+[Job 1220] Terminado correctamente.
+[Job 1252] Procesamiento completado. Liberando infraestructura.
+[Job 1252] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1284] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:11264"
+[Job 1316] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1348] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1380] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024 @192.168.0.14:gpu:1"
+[Job 1284] EXITO! Todos los recursos concedidos.
+[Job 1284] Ejecutando procesamiento en el cluster simulado...
+[Job 1348] EXITO! Todos los recursos concedidos.
+[Job 1348] Ejecutando procesamiento en el cluster simulado...
+[Job 1380] EXITO! Todos los recursos concedidos.
+[Job 1380] Ejecutando procesamiento en el cluster simulado...
+[Job 1284] Procesamiento completado. Liberando infraestructura.
+[Job 1284] Terminado correctamente.
+[Job 1348] Procesamiento completado. Liberando infraestructura.
+[Job 1348] Terminado correctamente.
+[Job 1380] Procesamiento completado. Liberando infraestructura.
+[Job 1380] Terminado correctamente.
+---Log del scheduler de erlang---
+fecha: [{2026,6,24}] hora: [{13,54,35}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1186] Solicitando los recursos: "@192.168.0.14:mem:4096"
+[Job 1218] Solicitando los recursos: "@192.168.0.14:mem:2048"
+[Job 1250] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:3072 @192.168.0.14:gpu:1"
+[Job 1282] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:4096"
+[Job 1314] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1250] EXITO! Todos los recursos concedidos.
+[Job 1250] Ejecutando procesamiento en el cluster simulado...
+[Job 1282] EXITO! Todos los recursos concedidos.
+[Job 1282] Ejecutando procesamiento en el cluster simulado...
+[Job 1250] Procesamiento completado. Liberando infraestructura.
+[Job 1250] Terminado correctamente.
+[Job 1282] Procesamiento completado. Liberando infraestructura.
+[Job 1282] Terminado correctamente.
+Error al recibir mensaje del nodo, razon:closed 
+---Log del scheduler de erlang---
+fecha: [{2026,6,24}] hora: [{13,58,25}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1378] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1410] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:2048"
+[Job 1442] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:1024 @192.168.0.14:gpu:1"
+[Job 1474] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1506] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:9216"
+[Job 1378] EXITO! Todos los recursos concedidos.
+[Job 1378] Ejecutando procesamiento en el cluster simulado...
+[Job 1410] EXITO! Todos los recursos concedidos.
+[Job 1410] Ejecutando procesamiento en el cluster simulado...
+[Job 1442] EXITO! Todos los recursos concedidos.
+[Job 1442] Ejecutando procesamiento en el cluster simulado...
+[Job 1474] EXITO! Todos los recursos concedidos.
+[Job 1474] Ejecutando procesamiento en el cluster simulado...
+[Job 1506] EXITO! Todos los recursos concedidos.
+[Job 1506] Ejecutando procesamiento en el cluster simulado...
+[Job 1378] Procesamiento completado. Liberando infraestructura.
+[Job 1378] Terminado correctamente.
+[Job 1410] Procesamiento completado. Liberando infraestructura.
+[Job 1410] Terminado correctamente.
+[Job 1442] Procesamiento completado. Liberando infraestructura.
+[Job 1442] Terminado correctamente.
+[Job 1474] Procesamiento completado. Liberando infraestructura.
+[Job 1474] Terminado correctamente.
+[Job 1506] Procesamiento completado. Liberando infraestructura.
+[Job 1506] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1538] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1570] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1602] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1634] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:11264 @192.168.0.14:gpu:1"
+[Job 1538] EXITO! Todos los recursos concedidos.
+[Job 1538] Ejecutando procesamiento en el cluster simulado...
+[Job 1634] EXITO! Todos los recursos concedidos.
+[Job 1634] Ejecutando procesamiento en el cluster simulado...
+[Job 1538] Procesamiento completado. Liberando infraestructura.
+[Job 1538] Terminado correctamente.
+[Job 1634] Procesamiento completado. Liberando infraestructura.
+[Job 1634] Terminado correctamente.

@@ -1,6 +1,7 @@
 #include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
 #include "estructuras/tablanodos.h"
+#include "estructuras/utils.h"
 #include "sockets.h"
 #include <arpa/inet.h>
 #include <errno.h>
