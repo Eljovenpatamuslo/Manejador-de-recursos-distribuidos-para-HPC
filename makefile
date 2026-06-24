@@ -31,7 +31,7 @@ ERL_DIR  = job-scheduler
 ERL_SRCS_PATH = $(addprefix $(ERL_DIR)/, $(ERL_SRCS))
 
 # Directorio de salida para los .beam
-ERL_OUT  = $(ERL_DIR)/compiled-code
+ERL_OUT  = $(ERL_DIR)
 
 # --- Reglas ---
 

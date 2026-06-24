@@ -1,0 +1,60 @@
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,8,30}] 
+Log iniciado 
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+Error al conectarse al nodo, razon:econnrefused , intentando otra vez...
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,8,57}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,10,17}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,13,19}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,17,58}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{20,26,5}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+Error al recibir mensaje del nodo, razon:timeout 
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{21,8,41}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+---Log del scheduler de erlang---
+fecha: [{2026,6,23}] hora: [{21,10,19}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2

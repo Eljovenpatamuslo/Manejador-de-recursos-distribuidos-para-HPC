@@ -67,7 +67,7 @@ esperar_respuesta_nodo(SockC) ->
                     %% Si el scheduler ya no existe (ej. fin de test), lo ignoramos
                     logF:log(msg, "Aviso: Se recibió NODES pero el scheduler ya no existe.~n");
                 Scheduler -> 
-                    Scheduler ! {ok, Nodes}
+                    Scheduler ! {ok, Nodes}, logF:log(msg,"3")
             end,
             esperar_respuesta_nodo(SockC);
         {error,Razon} -> 
@@ -101,7 +101,7 @@ send_manager(SockC) ->
             end;
         getNodes -> 
             case gen_tcp:send(SockC, "GET_NODES\n") of
-                ok -> ok;
+                ok -> ok, logF:log(msg,"2");
                 {error,Razon} -> 
                     logF:log(msg,"Error al enviar GET_NODES, razon: ~p ~n",[Razon]),
                     send_manager(SockC)
@@ -114,6 +114,7 @@ send_manager(SockC) ->
 
 %funcion para preguntarle al agente de c sobre todos los nodos de la red
 obtener_nodos() ->
+    logF:log(msg,"1"),
     send_manager ! getNodes,
     receive
         {ok,Nodos} -> {ok,Nodos};

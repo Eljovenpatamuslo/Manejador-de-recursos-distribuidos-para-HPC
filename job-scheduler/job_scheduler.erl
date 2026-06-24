@@ -26,7 +26,7 @@ scheduler_init(PuertoC) ->
 %el scheduler pide los nodos del server, crea trabajos, espera a que esten todos completados, espera un tiempo y vuelve a repetir
 scheduler() ->
     ListaNodos = manejador_recursos:obtener_y_formatear_nodos(),    
-    %logF:log(msg,"nodos: ~p~n", [ListaNodos]),
+    logF:log(msg,"nodos: ~p~n", [ListaNodos]),
     Recursos = manejador_recursos:obtener_recursos_para_jobs(ListaNodos),
     lists:foreach(fun(Recurso) -> job_server:crear_job(Recurso) end,Recursos),
     receive

@@ -339,7 +339,8 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                cliente->fd);
         tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
         char *nodos = tablanodos_obtener_nodos(tablaNodos);
-        enviar_formateado(cliente->fd, "NODES %s", nodos);
+        debug(nodos);
+        enviar_formateado(cliente->fd, "NODES %s\n", nodos);
     }
 
     else if (strncmp(mensaje, "JOB_RELEASE", 11) == 0) {
