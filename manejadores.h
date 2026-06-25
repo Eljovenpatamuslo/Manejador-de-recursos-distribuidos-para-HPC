@@ -47,7 +47,7 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
  */
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int erlangSchedulerSocket, int epollFd);
+                            int erlangFd, int epollFd, const char *miIp);
 
 /*
  * Parsea y ejecuta los protocolos remotos entre nodos (RESERVE, GRANTED,
@@ -67,16 +67,16 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
  */
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int epollFd, RecursosNodo recNodo);
+                            int epollFd, RecursosNodo recNodo,
+                            const char *miIp);
 
 /*
  * Consumidor del evento timerfd. Drena los bytes de expiración del socket
  * para evitar re-disparos continuos en epoll y dispara la función de broadcast
  * para emitir el estado actualizado del hardware local.
  */
-void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
-                   RecursosNodo recNodo, int puertoTcpEscucha, const char *miIp,
-                   const char *ip_broadcast);
+void manejar_timer(int timerSocket, int puerto_udp, int puertoTcpEscucha,
+                   const char *miIp, const char *ip_broadcast);
 
 /*
  * Procesa datagramas UDP entrantes. Extrae la IP de la cabecera de red y parsea
@@ -90,6 +90,5 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos);
  * UDP efímero de salida, lo ata a la IP de origen local y dispara el datagrama
  * hacia la IP de broadcast especificada para notificar a la subred.
  */
-void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
-                       int puertoTcpEscucha, const char *mi_ip,
+void anuncio_broadcast(int puerto_udp, int puertoTcpEscucha, const char *mi_ip,
                        const char *ip_broadcast);

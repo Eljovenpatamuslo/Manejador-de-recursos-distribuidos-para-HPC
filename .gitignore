@@ -2,3 +2,5 @@
 *.out
 *.o
 server
+job-scheduler/logErl.txt
+job-scheduler/.compiled

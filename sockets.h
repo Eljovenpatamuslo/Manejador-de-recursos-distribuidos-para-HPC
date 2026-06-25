@@ -15,7 +15,9 @@
  * típicamente con estado EINPROGRESS, para que epoll notifique cuando el
  * handshake finalice.
  */
-int crear_socket_saliente_nobloqueante(const char *ip, unsigned short puerto);
+int crear_socket_saliente_nobloqueante(const char *ip_destino,
+                                       unsigned short puerto_destino,
+                                       const char *miIp);
 
 /*
  * Crea un socket TCP servidor pasivo y no bloqueante. Lo enlaza (bind) a la IP

@@ -31,10 +31,6 @@ char *miIp;
 char *dirLocal;
 int puertoTcp;
 
-static void manejar_conn_sock_epoll(ClienteConexion *cliente);
-static int aceptar_listen_sock_epoll(int eventFd);
-static void rearmar_fd_epoll(int eventFd);
-
 static int aceptar_listen_sock_epoll(int eventFd) {
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -94,8 +90,8 @@ void *gestionar_epoll(void *arg) {
             int eventFd = contexto->fd;
 
             if (eventFd == timerSocket) {
-                manejar_timer(timerSocket, udpSocket, PUERTO_UDP, recNodo,
-                              puertoTcp, miIp, ipBroadcast);
+                manejar_timer(timerSocket, PUERTO_UDP, puertoTcp, miIp,
+                              ipBroadcast);
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN | EPOLLONESHOT,
                                      contexto, EPOLL_CTL_MOD);
             } else if (eventFd == udpSocket) {
@@ -108,9 +104,9 @@ void *gestionar_epoll(void *arg) {
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN, contexto,
                                      EPOLL_CTL_MOD);
             } else {
-                int sockClosed =
-                    leer_y_procesar_cliente(contexto, recNodo, tablaJobs,
-                                            tablaNodos, erlangFd, epollFd);
+                int sockClosed = leer_y_procesar_cliente(
+                    contexto, recNodo, tablaJobs, tablaNodos, erlangFd, epollFd,
+                    miIp);
 
                 if (sockClosed) {
                     close(contexto->fd);
@@ -185,7 +181,7 @@ int main(int argc, char *argv[]) {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    anuncio_broadcast(PUERTO_UDP, recNodo, puertoTcp, miIp, ipBroadcast);
+    anuncio_broadcast(PUERTO_UDP, puertoTcp, miIp, ipBroadcast);
     agregar_socket_epoll(epollFd, udpSocket, EPOLLIN | EPOLLONESHOT, ctxUdp,
                          EPOLL_CTL_ADD);
     sleep(2);

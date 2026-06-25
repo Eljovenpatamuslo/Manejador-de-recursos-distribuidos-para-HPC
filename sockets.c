@@ -98,32 +98,45 @@ int crear_timer_anuncio(int intervalo_segundos) {
     return tfd;
 }
 
-int crear_socket_saliente_nobloqueante(const char *ip, unsigned short puerto) {
-    // 1. Creamos el socket TCP y le inyectamos la flag SOCK_NONBLOCK
-    // directamente
+int crear_socket_saliente_nobloqueante(const char *ip_destino,
+                                       unsigned short puerto_destino,
+                                       const char *miIp) {
     int sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sock_fd == -1) {
         perror("Error al crear socket de salida no bloqueante");
         return -1;
     }
 
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(puerto);
+    struct sockaddr_in src_addr;
+    memset(&src_addr, 0, sizeof(src_addr));
+    src_addr.sin_family = AF_INET;
+    src_addr.sin_port = 0;
 
-    if (inet_pton(AF_INET, ip, &dest_addr.sin_addr) <= 0) {
-        perror("Error en inet_pton: IP inválida");
+    if (inet_pton(AF_INET, miIp, &src_addr.sin_addr) <= 0) {
+        perror("Error en inet_pton para IP origen");
         close(sock_fd);
         return -1;
     }
 
-    // 2. Intentamos conectar. Al ser no bloqueante, no va a esperar el
-    // handshake.
+    if (bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr)) == -1) {
+        perror("Fallo al forzar la IP origen con bind");
+        close(sock_fd);
+        return -1;
+    }
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(puerto_destino);
+
+    if (inet_pton(AF_INET, ip_destino, &dest_addr.sin_addr) <= 0) {
+        perror("Error en inet_pton: IP destino inválida");
+        close(sock_fd);
+        return -1;
+    }
+
     if (connect(sock_fd, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) ==
         -1) {
-        // Si el error es EINPROGRESS, todo está perfecto. Se está conectando de
-        // fondo.
         if (errno != EINPROGRESS) {
             perror("Fallo crítico en connect hacia el otro nodo");
             close(sock_fd);
@@ -131,8 +144,6 @@ int crear_socket_saliente_nobloqueante(const char *ip, unsigned short puerto) {
         }
     }
 
-    // Devolvemos el descriptor. Aún no está listo para usarse, epoll nos
-    // avisará.
     return sock_fd;
 }
 

@@ -22,7 +22,7 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
 
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int erlangFd, int epollFd) {
+                            int erlangFd, int epollFd, const char *miIp) {
 
     if (cliente->tipo == CONEXION_SALIENTE) {
 
@@ -81,7 +81,7 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                              tablaNodos, erlangFd);
         } else {
             manejar_cliente_erlang(cliente, cliente->buffer, tablaJobs,
-                                   tablaNodos, epollFd, recNodo);
+                                   tablaNodos, epollFd, recNodo, miIp);
         }
 
         int bytes_sobrantes = cliente->bytes_in_buffer - (longitud_mensaje + 1);
@@ -169,7 +169,6 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
             printf("[AGENTE C %d] Solicita RESERVE: Job=%lu, Recurso=%s, "
                    "Cantidad=%lu\n",
                    cliente->fd, jobId, recurso, cant);
-
             DatosNodo *datos = tablanodos_buscar(tablaNodos, cliente->ip);
             if (datos != NULL) {
                 int estadoSolicitud =
@@ -248,11 +247,6 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
     ListaResultados actual = tablajobs_release_job(tablaJobs, jobId);
 
     while (actual != NULL) {
-        debug("ENTRO");
-        printf("liberar cpu:%u mem:%lu gpu:%u\n",
-               actual->datos->recReservados->cpu,
-               actual->datos->recReservados->mem,
-               actual->datos->recReservados->gpu);
         char rec[4];
         int cant = 0;
         if (actual->datos->recReservados->cpu > 0) {
@@ -279,7 +273,8 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
 
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int epollFd, RecursosNodo recNodo) {
+                            int epollFd, RecursosNodo recNodo,
+                            const char *miIp) {
 
     if (strncmp(mensaje, "JOB_REQUEST", 11) == 0) {
         unsigned long jobId;
@@ -305,8 +300,8 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
 
                 DatosNodo *datos = tablanodos_buscar(tablaNodos, ip);
                 if (datos != NULL) {
-                    int fdSalida =
-                        crear_socket_saliente_nobloqueante(ip, datos->puerto);
+                    int fdSalida = crear_socket_saliente_nobloqueante(
+                        ip, datos->puerto, miIp);
 
                     ClienteConexion *nueva_conexion =
                         crear_cliente(fdSalida, CONEXION_SALIENTE, ip, NULL);
@@ -352,7 +347,6 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                cliente->fd);
         tablanodos_borrar_expirados(tablaNodos, tablaJobs, recNodo);
         char *nodos = tablanodos_obtener_nodos(tablaNodos);
-        debug(nodos);
         enviar_formateado(cliente->fd, "NODES %s\n", nodos);
     }
 
@@ -384,7 +378,6 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
             if (!datos)
                 return;
 
-            // 1. Extraemos la IP del sobre (cabecera del paquete)
             if (inet_ntop(AF_INET, &(sender_addr.sin_addr), datos->ip,
                           INET_ADDRSTRLEN) == NULL) {
                 perror("inet_ntop fallo al extraer la IP");
@@ -392,7 +385,6 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
                 return;
             }
 
-            // 2. Parseamos la carta (el contenido estricto)
             if (sscanf(buffer_udp, "ANNOUNCE %hu %63[^\n]", &datos->puerto,
                        datos->recursos) == 2) {
 
@@ -407,18 +399,15 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos) {
         }
     }
 }
-void manejar_timer(int timerSocket, int udp_sock, int puerto_udp,
-                   RecursosNodo recNodo, int puertoTcpEscucha, const char *miIp,
-                   const char *ip_broadcast) {
+void manejar_timer(int timerSocket, int puerto_udp, int puertoTcpEscucha,
+                   const char *miIp, const char *ip_broadcast) {
     // Vacio el timerfd para que epoll no siga notificando
     uint64_t exp;
     read(timerSocket, &exp, sizeof(exp));
-    anuncio_broadcast(puerto_udp, recNodo, puertoTcpEscucha, miIp,
-                      ip_broadcast);
+    anuncio_broadcast(puerto_udp, puertoTcpEscucha, miIp, ip_broadcast);
 }
 
-void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
-                       int puertoTcpEscucha, const char *mi_ip,
+void anuncio_broadcast(int puerto_udp, int puertoTcpEscucha, const char *miIp,
                        const char *ip_broadcast) {
 
     char mensaje_anuncio[256];
@@ -439,7 +428,7 @@ void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
     memset(&src_addr, 0, sizeof(src_addr));
     src_addr.sin_family = AF_INET;
     src_addr.sin_port = 0;
-    inet_pton(AF_INET, mi_ip, &src_addr.sin_addr);
+    inet_pton(AF_INET, miIp, &src_addr.sin_addr);
 
     bind(send_sock, (struct sockaddr *)&src_addr, sizeof(src_addr));
 
@@ -454,5 +443,5 @@ void anuncio_broadcast(int puerto_udp, RecursosNodo recNodo,
 
     close(send_sock);
 
-    printf("Anuncio broadcast enviado: %s\n", mi_ip);
+    printf("Anuncio broadcast enviado: %s\n", miIp);
 }
