@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
                 "Uso: %s <MI_IP> <MI_PUERTO_TCP> <IP_BROADCAST> <DIR_LOCAL>\n",
                 argv[0]);
         fprintf(stderr,
-                "Ejemplo SIMULACION: %s 127.0.0.1 12000 127.255.255.255 "
-                "127.0.0.20\n",
+                "Ejemplo SIMULACION: %s 127.0.0.2 12000 127.255.255.255 "
+                "127.0.0.1\n",
                 argv[0]);
         fprintf(stderr,
                 "Ejemplo RED REAL:   %s 192.168.0.14 12000 255.255.255.255 "
