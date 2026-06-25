@@ -1,4 +1,5 @@
 #include "manejadores.h"
+#include "estructuras/tablajobs.h"
 
 #define debug(str) fprintf(stderr, "HOLA: %s\n", str);
 
@@ -294,6 +295,8 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
             char recurso[16];
             int cantidad;
             int bytes_leidos;
+            ClienteConexion *clienteArray[MAX_NODOS];
+            int count = 0;
 
             while (sscanf(ptr, " @%15[^:]:%15[^:]:%d%n", ip, recurso, &cantidad,
                           &bytes_leidos) == 3) {
@@ -318,13 +321,18 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                              "RESERVE %lu %s %d\n", jobId, recurso, cantidad);
                     nueva_conexion->tipoRec = tipoRec;
 
-                    // Cuando se arme la conexion se enviara el mensaje guardado
-                    // en la estructura
-                    agregar_socket_epoll(epollFd, fdSalida,
-                                         EPOLLOUT | EPOLLONESHOT,
-                                         nueva_conexion, EPOLL_CTL_ADD);
+                    clienteArray[count] = nueva_conexion;
                 }
                 ptr += bytes_leidos;
+                count++;
+            }
+
+            for (int i = 0; i < count; i++) {
+                // Cuando se arme la conexion se enviara el mensaje
+                // guardado en la estructura
+                agregar_socket_epoll(epollFd, clienteArray[i]->fd,
+                                     EPOLLOUT | EPOLLONESHOT, clienteArray[i],
+                                     EPOLL_CTL_ADD);
             }
 
             printf("[ERLANG %d] Finalizado el parseo de dependencias para "

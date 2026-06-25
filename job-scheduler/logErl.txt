@@ -309,3 +309,200 @@ nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
 [Job 1315] Solicitando los recursos: "@192.168.0.14:mem:2048"
 [Job 1411] Reiniciando ciclo de peticiones (Intento 1).
 [Job 1411] Solicitando los recursos: "@192.168.0.14:mem:566"
+---Log del scheduler de erlang---
+fecha: [{2026,6,25}] hora: [{18,45,13}] 
+Log iniciado 
+Erlang se conecto al nodo local
+send_recv_manager iniciado 
+job_server iniciado
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 37] Solicitando los recursos: "@192.168.0.14:cpu:4 @192.168.0.14:mem:8192 @192.168.0.14:gpu:1"
+[Job 69] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 101] Solicitando los recursos: "@192.168.0.14:mem:3072"
+[Job 133] Solicitando los recursos: "@192.168.0.14:mem:2048"
+[Job 37] EXITO! Todos los recursos concedidos.
+[Job 37] Ejecutando procesamiento en el cluster simulado...
+[Job 69] EXITO! Todos los recursos concedidos.
+[Job 69] Ejecutando procesamiento en el cluster simulado...
+[Job 133] EXITO! Todos los recursos concedidos.
+[Job 133] Ejecutando procesamiento en el cluster simulado...
+[Job 101] EXITO! Todos los recursos concedidos.
+[Job 101] Ejecutando procesamiento en el cluster simulado...
+[Job 37] Procesamiento completado. Liberando infraestructura.
+[Job 37] Terminado correctamente.
+[Job 69] Procesamiento completado. Liberando infraestructura.
+[Job 69] Terminado correctamente.
+[Job 133] Procesamiento completado. Liberando infraestructura.
+[Job 133] Terminado correctamente.
+[Job 101] Procesamiento completado. Liberando infraestructura.
+[Job 101] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 165] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:12288 @192.168.0.14:gpu:1"
+[Job 197] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:1024"
+[Job 229] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:566"
+[Job 165] EXITO! Todos los recursos concedidos.
+[Job 165] Ejecutando procesamiento en el cluster simulado...
+[Job 197] EXITO! Todos los recursos concedidos.
+[Job 197] Ejecutando procesamiento en el cluster simulado...
+[Job 229] EXITO! Todos los recursos concedidos.
+[Job 229] Ejecutando procesamiento en el cluster simulado...
+[Job 165] Procesamiento completado. Liberando infraestructura.
+[Job 165] Terminado correctamente.
+[Job 197] Procesamiento completado. Liberando infraestructura.
+[Job 197] Terminado correctamente.
+[Job 229] Procesamiento completado. Liberando infraestructura.
+[Job 229] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 261] Solicitando los recursos: "@192.168.0.14:cpu:4 @192.168.0.14:mem:12288 @192.168.0.14:gpu:1"
+[Job 293] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 325] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 261] EXITO! Todos los recursos concedidos.
+[Job 261] Ejecutando procesamiento en el cluster simulado...
+[Job 293] EXITO! Todos los recursos concedidos.
+[Job 293] Ejecutando procesamiento en el cluster simulado...
+[Job 325] EXITO! Todos los recursos concedidos.
+[Job 325] Ejecutando procesamiento en el cluster simulado...
+[Job 261] Procesamiento completado. Liberando infraestructura.
+[Job 261] Terminado correctamente.
+[Job 293] Procesamiento completado. Liberando infraestructura.
+[Job 293] Terminado correctamente.
+[Job 325] Procesamiento completado. Liberando infraestructura.
+[Job 325] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 357] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:566"
+[Job 389] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:13312 @192.168.0.14:gpu:1"
+[Job 421] Solicitando los recursos: "@192.168.0.14:cpu:1"
+[Job 357] EXITO! Todos los recursos concedidos.
+[Job 357] Ejecutando procesamiento en el cluster simulado...
+[Job 389] EXITO! Todos los recursos concedidos.
+[Job 389] Ejecutando procesamiento en el cluster simulado...
+[Job 421] EXITO! Todos los recursos concedidos.
+[Job 421] Ejecutando procesamiento en el cluster simulado...
+[Job 357] Procesamiento completado. Liberando infraestructura.
+[Job 357] Terminado correctamente.
+[Job 389] Procesamiento completado. Liberando infraestructura.
+[Job 389] Terminado correctamente.
+[Job 421] Procesamiento completado. Liberando infraestructura.
+[Job 421] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1154] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:1024"
+[Job 1186] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1218] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:11264 @192.168.0.14:gpu:1"
+[Job 1250] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1154] EXITO! Todos los recursos concedidos.
+[Job 1154] Ejecutando procesamiento en el cluster simulado...
+[Job 1186] EXITO! Todos los recursos concedidos.
+[Job 1186] Ejecutando procesamiento en el cluster simulado...
+[Job 1250] EXITO! Todos los recursos concedidos.
+[Job 1250] Ejecutando procesamiento en el cluster simulado...
+[Job 1218] EXITO! Todos los recursos concedidos.
+[Job 1218] Ejecutando procesamiento en el cluster simulado...
+[Job 1154] Procesamiento completado. Liberando infraestructura.
+[Job 1154] Terminado correctamente.
+[Job 1186] Procesamiento completado. Liberando infraestructura.
+[Job 1186] Terminado correctamente.
+[Job 1250] Procesamiento completado. Liberando infraestructura.
+[Job 1250] Terminado correctamente.
+[Job 1218] Procesamiento completado. Liberando infraestructura.
+[Job 1218] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1282] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:6144"
+[Job 1314] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1346] Solicitando los recursos: "@192.168.0.14:cpu:3 @192.168.0.14:mem:7168 @192.168.0.14:gpu:1"
+[Job 1282] EXITO! Todos los recursos concedidos.
+[Job 1282] Ejecutando procesamiento en el cluster simulado...
+[Job 1314] EXITO! Todos los recursos concedidos.
+[Job 1314] Ejecutando procesamiento en el cluster simulado...
+[Job 1346] EXITO! Todos los recursos concedidos.
+[Job 1346] Ejecutando procesamiento en el cluster simulado...
+[Job 1282] Procesamiento completado. Liberando infraestructura.
+[Job 1282] Terminado correctamente.
+[Job 1314] Procesamiento completado. Liberando infraestructura.
+[Job 1314] Terminado correctamente.
+[Job 1346] Procesamiento completado. Liberando infraestructura.
+[Job 1346] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1378] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:2048"
+[Job 1410] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:9216 @192.168.0.14:gpu:1"
+[Job 1442] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:2048"
+[Job 1474] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1378] EXITO! Todos los recursos concedidos.
+[Job 1378] Ejecutando procesamiento en el cluster simulado...
+[Job 1410] EXITO! Todos los recursos concedidos.
+[Job 1410] Ejecutando procesamiento en el cluster simulado...
+[Job 1442] EXITO! Todos los recursos concedidos.
+[Job 1442] Ejecutando procesamiento en el cluster simulado...
+[Job 1474] EXITO! Todos los recursos concedidos.
+[Job 1474] Ejecutando procesamiento en el cluster simulado...
+[Job 1378] Procesamiento completado. Liberando infraestructura.
+[Job 1378] Terminado correctamente.
+[Job 1410] Procesamiento completado. Liberando infraestructura.
+[Job 1410] Terminado correctamente.
+[Job 1442] Procesamiento completado. Liberando infraestructura.
+[Job 1442] Terminado correctamente.
+[Job 1474] Procesamiento completado. Liberando infraestructura.
+[Job 1474] Terminado correctamente.
+1
+2
+3
+Nods "192.168.0.14:12000:cpu:4:mem:13878:gpu:1" 
+nodos: [{{direccion,"192.168.0.14","12000"},{recursos,4,13878,1}}]
+[Job 1506] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1538] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:4096"
+[Job 1570] Solicitando los recursos: "@192.168.0.14:mem:566"
+[Job 1602] Solicitando los recursos: "@192.168.0.14:cpu:2 @192.168.0.14:mem:1024"
+[Job 1634] Solicitando los recursos: "@192.168.0.14:cpu:1 @192.168.0.14:mem:6144 @192.168.0.14:gpu:1"
+[Job 1666] Solicitando los recursos: "@192.168.0.14:mem:1024"
+[Job 1506] EXITO! Todos los recursos concedidos.
+[Job 1506] Ejecutando procesamiento en el cluster simulado...
+[Job 1538] EXITO! Todos los recursos concedidos.
+[Job 1538] Ejecutando procesamiento en el cluster simulado...
+[Job 1570] EXITO! Todos los recursos concedidos.
+[Job 1570] Ejecutando procesamiento en el cluster simulado...
+[Job 1602] EXITO! Todos los recursos concedidos.
+[Job 1602] Ejecutando procesamiento en el cluster simulado...
+[Job 1634] EXITO! Todos los recursos concedidos.
+[Job 1634] Ejecutando procesamiento en el cluster simulado...
+[Job 1666] EXITO! Todos los recursos concedidos.
+[Job 1666] Ejecutando procesamiento en el cluster simulado...
+[Job 1506] Procesamiento completado. Liberando infraestructura.
+[Job 1506] Terminado correctamente.
+[Job 1538] Procesamiento completado. Liberando infraestructura.
+[Job 1538] Terminado correctamente.
+[Job 1570] Procesamiento completado. Liberando infraestructura.
+[Job 1570] Terminado correctamente.
+[Job 1602] Procesamiento completado. Liberando infraestructura.
+[Job 1602] Terminado correctamente.
+[Job 1634] Procesamiento completado. Liberando infraestructura.
+[Job 1634] Terminado correctamente.
+[Job 1666] Procesamiento completado. Liberando infraestructura.
+[Job 1666] Terminado correctamente.
+Error al recibir mensaje del nodo, razon:closed 
