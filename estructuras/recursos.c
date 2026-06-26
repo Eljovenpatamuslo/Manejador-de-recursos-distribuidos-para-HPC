@@ -146,6 +146,7 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             nuevoNodo->jobId = solJobId;
             strncpy(nuevoNodo->ip, solIp, 16);
             nuevoNodo->puerto = solPuerto;
+            nuevoNodo->datosCliente = solDatosCliente;
 
             // Lo insertamos al principio de nuestra lista de promovidos
             nuevoNodo->sig = promovidosPrimero;

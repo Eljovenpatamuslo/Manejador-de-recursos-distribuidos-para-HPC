@@ -138,8 +138,10 @@ void notificar_lista_promovidos(ListaPromovidos lista) {
     while (actual != NULL) {
         printf("[PROMOVIDOS] Notificando a FD %d (Job %lu)\n", actual->fd,
                actual->jobId);
+        
+        int fd = ((ClienteConexion *)actual->datosCliente)->fd;
 
-        if (enviar_formateado(actual->fd, "GRANTED %lu\n", actual->jobId) ==
+        if (enviar_formateado(fd, "GRANTED %lu\n", actual->jobId) ==
             0) {
             printf("[PROMOVIDOS] Notificación exitosa\n");
         }
