@@ -2,7 +2,7 @@
 
 # ==============================================================================
 # SCRIPT DE PRUEBA: AUSENCIA DE DEADLOCK (RECURSOS LOCALES)
-# Requiere fix_bind.so para garantizar el socket local.
+# No requiere fix_bind.so. Usa el nuevo manejo de recursos locales.
 # ==============================================================================
 
 GREEN='\033[0;32m'
@@ -30,59 +30,15 @@ lsof -ti tcp:${PORT_B} | xargs kill -9 2>/dev/null || true
 rm -f logErl.txt log_erl_*.txt log_c_*.txt
 sleep 1
 
-# --- COMPILAR fix_bind.so (si no existe) ---
-# POR ALGUN MOTIVO EL SOCKET DE C NO SE CREA CORRECTAMENTE 
-if [ ! -f fix_bind.so ]; then
-    echo -e "${YELLOW}[*] Compilando fix_bind.so...${NC}"
-    cat > fix_bind.c << 'EOF'
-#define _GNU_SOURCE
-#include <dlfcn.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <stdlib.h>
-
-int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-    static int (*real_connect)(int, const struct sockaddr*, socklen_t) = NULL;
-    if (!real_connect) real_connect = dlsym(RTLD_NEXT, "connect");
-
-    if (addr->sa_family == AF_INET) {
-        struct sockaddr_in *sin = (struct sockaddr_in *)addr;
-        char *ip = inet_ntoa(sin->sin_addr);
-        if (strncmp(ip, "127.", 4) == 0) {
-            char *src_ip = getenv("BIND_SRC_IP");
-            if (src_ip) {
-                struct sockaddr_in local_addr;
-                memset(&local_addr, 0, sizeof(local_addr));
-                local_addr.sin_family = AF_INET;
-                local_addr.sin_port = 0;
-                inet_aton(src_ip, &local_addr.sin_addr);
-                bind(sockfd, (struct sockaddr*)&local_addr, sizeof(local_addr));
-            }
-        }
-    }
-    return real_connect(sockfd, addr, addrlen);
-}
-EOF
-    gcc -shared -fPIC -o fix_bind.so fix_bind.c -ldl || {
-        echo -e "${RED}[FAIL] No se pudo compilar fix_bind.so${NC}"
-        exit 1
-    }
-    echo -e "${GREEN}[OK] fix_bind.so compilado.${NC}"
-fi
-
-# --- DESPLIEGUE (con fix_bind.so) ---
+# --- DESPLIEGUE ---
 echo -e "\n${BLUE}[Fase 1] Lanzando topología...${NC}"
 
 echo -e "[*] Agente C - Nodo A (127.0.0.2:${PORT_A})..."
-BIND_SRC_IP=127.0.0.2 LD_PRELOAD=./fix_bind.so stdbuf -oL \
-    ./server 127.0.0.2 ${PORT_A} 127.255.255.255 127.0.0.1 > log_c_1.txt 2>&1 &
+stdbuf -oL ./server 127.0.0.2 ${PORT_A} 127.255.255.255 127.0.0.1 > log_c_1.txt 2>&1 &
 PID_C1=$!
 
 echo -e "[*] Agente C - Nodo B (127.0.0.3:${PORT_B})..."
-BIND_SRC_IP=127.0.0.3 LD_PRELOAD=./fix_bind.so stdbuf -oL \
-    ./server 127.0.0.3 ${PORT_B} 127.255.255.255 127.0.0.1 > log_c_2.txt 2>&1 &
+stdbuf -oL ./server 127.0.0.3 ${PORT_B} 127.255.255.255 127.0.0.1 > log_c_2.txt 2>&1 &
 PID_C2=$!
 
 echo "[*] Esperando inicialización..."
@@ -97,7 +53,7 @@ echo "==================================================="
 # --- ORQUESTACIÓN (solo CPUs locales) ---
 echo -e "\n${BLUE}[Fase 2] Lanzando jobs simultáneos (solo CPUs locales)...${NC}"
 
-# Nodo A: pide 4 CPUs locales (no necesita recursos remotos)
+# Nodo A: pide 4 CPUs locales
 erl -sname nodoA -noshell -eval "
     logF:crear_error_managment(),
     send_recv_manager:send_recv_init(${PORT_A}),
