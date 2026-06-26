@@ -7,7 +7,7 @@
 
 -export([scheduler_init/1,scheduler/0,get_pid_scheduler/0]).
 -define(SEC, 1000).
--define(TIME_BEFORE_DOING_MORE_JOBS, 10* ?SEC).
+-define(TIME_BEFORE_DOING_MORE_JOBS, 1* ?SEC).
 
 %iniciar todas los modulos y el scheduler en si
 scheduler_init(PuertoC) ->

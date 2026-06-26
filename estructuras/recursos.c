@@ -1,5 +1,5 @@
 #include "recursos.h"
-
+#include "conexion.h"
 Recurso inicializar_recurso(unsigned long capacidad) {
     Recurso recurso = malloc(sizeof(struct _Recurso));
     assert(recurso != NULL);
@@ -85,43 +85,30 @@ int reservar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
 ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
                                 unsigned long jobId, TipoRecurso rec) {
     Recurso recurso;
+    if (rec == CPU) recurso = nodo->cpu;
+    else if (rec == MEM) recurso = nodo->mem;
+    else recurso = nodo->gpu;
 
-    if (rec == CPU)
-        recurso = nodo->cpu;
-    else if (rec == MEM)
-        recurso = nodo->mem;
-    else
-        recurso = nodo->gpu;
-
-    unsigned long cantALiberar =
-        tablajobs_restar_recurso(tablaJobs, jobId, rec);
-    if (cantALiberar == 0) {
-        return NULL; // El job no tenía este recurso asignado
-    }
+    unsigned long cantALiberar = tablajobs_restar_recurso(tablaJobs, jobId, rec);
+    if (cantALiberar == 0) return NULL;
 
     pthread_mutex_lock(&recurso->mutex);
-
     recurso->cantDisp += cantALiberar;
 
-    // Lista temporal de las reservas pendientes asignadas
     ListaPromovidos promovidosPrimero = NULL;
 
     while (!cola_es_vacia(recurso->solicitudPend)) {
         Solicitud solPendiente = (Solicitud)cola_inicio(recurso->solicitudPend);
-
         if (recurso->cantDisp >= solPendiente->cant) {
-            // Hay suficientes recursos para la primera solicitud
             cola_desencolar(recurso->solicitudPend);
             recurso->cantDisp -= solPendiente->cant;
 
-            // Almacenamos los datos necesarios de la solicitud
             unsigned long solJobId = solPendiente->jobId;
             unsigned long solCant = solPendiente->cant;
             void *solDatosCliente = solPendiente->datosCliente;
             char solIp[16];
             strncpy(solIp, solPendiente->ip, 16);
             unsigned short solPuerto = solPendiente->puerto;
-
             free(solPendiente);
 
             DatosJob *nuevosDatos = malloc(sizeof(DatosJob));
@@ -131,24 +118,15 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
             nuevosDatos->datosCliente = solDatosCliente;
             strncpy(nuevosDatos->nodoIp, solIp, 16);
             nuevosDatos->nodoPuerto = solPuerto;
-
-            nuevosDatos->recReservados =
-                inicializar_recursos_reservados(rec, solCant);
-            nuevosDatos->recPedidos =
-                inicializar_recursos_reservados(rec, solCant);
-
-            // Insertamos o actualizamos en la tabla general
+            nuevosDatos->recReservados = inicializar_recursos_reservados(rec, solCant);
+            nuevosDatos->recPedidos = inicializar_recursos_reservados(rec, solCant);
             tablajobs_insertar(tablaJobs, nuevosDatos);
 
-            struct _NodoPromovido *nuevoNodo =
-                malloc(sizeof(struct _NodoPromovido));
+            // Nodo promovido: almacena directamente el puntero al ClienteConexion
+            struct _NodoPromovido *nuevoNodo = malloc(sizeof(struct _NodoPromovido));
             assert(nuevoNodo != NULL);
             nuevoNodo->jobId = solJobId;
-            strncpy(nuevoNodo->ip, solIp, 16);
-            nuevoNodo->puerto = solPuerto;
-            nuevoNodo->datosCliente = solDatosCliente;
-
-            // Lo insertamos al principio de nuestra lista de promovidos
+            nuevoNodo->cliente = (ClienteConexion *)solDatosCliente;
             nuevoNodo->sig = promovidosPrimero;
             promovidosPrimero = nuevoNodo;
         } else {
@@ -157,7 +135,6 @@ ListaPromovidos liberar_recurso(RecursosNodo nodo, TablaJobs tablaJobs,
     }
 
     pthread_mutex_unlock(&recurso->mutex);
-
     return promovidosPrimero;
 }
 

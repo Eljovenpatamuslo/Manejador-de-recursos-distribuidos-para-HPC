@@ -3,6 +3,7 @@
 
 #include "cola.h"
 #include "tablajobs.h"
+#include "conexion.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -32,14 +33,11 @@ struct _RecursosNodo {
 };
 typedef struct _RecursosNodo *RecursosNodo;
 
-struct _NodoPromovido {
+typedef struct _NodoPromovido {
     unsigned long jobId;
-    char ip[16];
-    unsigned short puerto;
-    void* datosCliente;
+    ClienteConexion *cliente;   // antes era int fd
     struct _NodoPromovido *sig;
-};
-typedef struct _NodoPromovido *ListaPromovidos;
+} *ListaPromovidos;
 
 /**
  * Inicializa los recursos vacios.

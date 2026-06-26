@@ -1,3 +1,6 @@
+#ifndef MANEJADORES_H
+#define MANEJADORES_H
+
 #include "estructuras/recursos.h"
 #include "estructuras/tablajobs.h"
 #include "estructuras/tablanodos.h"
@@ -15,31 +18,6 @@
 
 #define MAX_MSG_LEN 256
 
-typedef enum {
-    CLIENTE_ERLANG,
-    CLIENTE_AGENTE_C,
-    CONEXION_SALIENTE
-} TipoCliente;
-
-typedef struct {
-    int fd;
-    TipoCliente tipo;
-    char buffer[4096];
-    int bytes_in_buffer;
-    char ip[16];
-    char mensaje[256];
-    TipoRecurso tipoRec;
-} ClienteConexion;
-
-/*
- * Reserva memoria en el heap para un contexto ClienteConexion.
- * Inicializa el FD, tipo de conexión, y almacena datos vitales (IP, puerto,
- * buffer de mensajes) para rastrear el estado del socket dentro del ciclo
- * epoll.
- */
-ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
-                               char *mensaje);
-
 /*
  * Consume el socket no bloqueante hasta vaciarlo (EAGAIN), acumulando bytes en
  * el buffer del contexto. Tokeniza el flujo por saltos de línea ('\n') y rutea
@@ -47,7 +25,7 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
  */
 int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
-                            int erlangFd, int epollFd, const char *miIp);
+                            int erlangFd, int epollFd, const char *miIp, int puertoTcp);
 
 /*
  * Parsea y ejecuta los protocolos remotos entre nodos (RESERVE, GRANTED,
@@ -68,8 +46,7 @@ void manejar_agente_c(ClienteConexion *cliente, const char *mensaje,
 void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
                             TablaJobs tablaJobs, TablaNodos tablaNodos,
                             int epollFd, RecursosNodo recNodo,
-                            const char *miIp);
-
+                            const char *miIp, int puertoTcp);
 /*
  * Consumidor del evento timerfd. Drena los bytes de expiración del socket
  * para evitar re-disparos continuos en epoll y dispara la función de broadcast
@@ -92,3 +69,8 @@ void registrar_nodo(int udp_sock, TablaNodos tablaNodos);
  */
 void anuncio_broadcast(int puerto_udp, int puertoTcpEscucha, const char *mi_ip,
                        const char *ip_broadcast);
+
+
+void notificar_lista_promovidos(ListaPromovidos lista);
+void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd, RecursosNodo recNodo);
+#endif

@@ -71,6 +71,7 @@ static int aceptar_listen_sock_epoll(int eventFd) {
 }
 
 void *gestionar_epoll(void *arg) {
+    (void)arg;   // evita warning de parámetro sin uso
     struct epoll_event events[MAX_EV_EPOLL];
 
     for (;;) {
@@ -82,7 +83,6 @@ void *gestionar_epoll(void *arg) {
         }
 
         for (int n = 0; n < numFds; ++n) {
-            // Extaer el puntero directamente de forma segura
             ClienteConexion *contexto = (ClienteConexion *)events[n].data.ptr;
             if (contexto == NULL)
                 continue;
@@ -104,9 +104,10 @@ void *gestionar_epoll(void *arg) {
                 agregar_socket_epoll(epollFd, eventFd, EPOLLIN, contexto,
                                      EPOLL_CTL_MOD);
             } else {
+                // Llamada actualizada con puertoTcp
                 int sockClosed = leer_y_procesar_cliente(
                     contexto, recNodo, tablaJobs, tablaNodos, erlangFd, epollFd,
-                    miIp);
+                    miIp, puertoTcp);
 
                 if (sockClosed) {
                     close(contexto->fd);
