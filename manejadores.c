@@ -10,7 +10,7 @@ ClienteConexion *crear_cliente(int clienteFD, int tipo, char ip[],
     ClienteConexion *nuevoCliente = malloc(sizeof(ClienteConexion));
     nuevoCliente->fd = clienteFD;
     nuevoCliente->tipo = tipo;
-
+    nuevoCliente->bytes_in_buffer = 0;
     if (ip != NULL)
         strncpy(nuevoCliente->ip, ip, INET_ADDRSTRLEN);
 
@@ -48,6 +48,12 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
     }
 
     int espacio_libre = sizeof(cliente->buffer) - cliente->bytes_in_buffer - 1;
+
+    // printf("[DEBUG FD %d] bytes_in_buffer: %d, espacio_libre (int): %d, "
+    //        "espacio_libre (size_t): %zu, puntero buffer: %p\n",
+    //        cliente->fd, cliente->bytes_in_buffer, espacio_libre,
+    //        (size_t)espacio_libre,
+    //        (void *)(cliente->buffer + cliente->bytes_in_buffer));
 
     int bytes_leidos = read(
         cliente->fd, cliente->buffer + cliente->bytes_in_buffer, espacio_libre);
