@@ -63,7 +63,14 @@ int leer_y_procesar_cliente(ClienteConexion *cliente, RecursosNodo recNodo,
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return 0;
         }
-        perror("read error");
+        if (errno == ECONNRESET) {
+            printf("[WARNING] El %s (FD: %d) cortó la conexión abruptamente "
+                   "(RST).\n",
+                   cliente->tipo == CLIENTE_AGENTE_C ? "AGENTE C" : "ERLANG",
+                   cliente->fd);
+            return 1;
+        }
+        perror("read error general");
         return 1;
     }
 
@@ -136,13 +143,11 @@ void notificar_lista_promovidos(ListaPromovidos lista) {
     struct _NodoPromovido *actual = lista;
 
     while (actual != NULL) {
-        printf("[PROMOVIDOS] Notificando a FD %d (Job %lu)\n", actual->fd,
-               actual->jobId);
-        
         int fd = ((ClienteConexion *)actual->datosCliente)->fd;
+        printf("[PROMOVIDOS] Notificando a FD %d (Job %lu)\n", fd,
+               actual->jobId);
 
-        if (enviar_formateado(fd, "GRANTED %lu\n", actual->jobId) ==
-            0) {
+        if (enviar_formateado(fd, "GRANTED %lu\n", actual->jobId) == 0) {
             printf("[PROMOVIDOS] Notificación exitosa\n");
         }
 
@@ -264,10 +269,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
 
         int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
         enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
-
-        epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL);
-        close(fd);
-        free(actual->datos->datosCliente);
+        shutdown(fd, SHUT_WR);
 
         actual = actual->sig;
     }
@@ -285,7 +287,7 @@ void manejar_cliente_erlang(ClienteConexion *cliente, const char *mensaje,
         if (sscanf(mensaje, "JOB_REQUEST %lu%n", &jobId, &offset) == 1) {
             printf("[ERLANG %d] Inicia Job ID: %lu\n", cliente->fd, jobId);
 
-            // Colocamos un puntero justo donde terminó de leer el jobId
+            // Colocamos un puntero justo donde termino de leer el jobId
             const char *ptr = mensaje + offset;
 
             char ip[16];
