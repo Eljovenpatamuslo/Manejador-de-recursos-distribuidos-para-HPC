@@ -24,9 +24,13 @@ Para construir todo (agente C + módulos Erlang):
 # Compilar Erlang
 > make all_erl
 
-#Limpieza:
-make clean      # Elimina objetos, ejecutable y .beam
-make clean_c    # Solo limpia C
-make clean_erl  # Solo limpia Erlang
+# Ejecución:
+> ./server <MI_IP> <MI_PUERTO_TCP> <IP_BROADCAST> <DIR_LOCAL> # Ejecución del servidor de c
+> erl -> job_scheduler:scheduler_init(MI_PUERTO_TCP).
+
+## Limpieza:
+> make clean      # Elimina objetos, ejecutable y .beam
+> make clean_c    # Solo limpia C
+> make clean_erl  # Solo limpia Erlang
 
 
