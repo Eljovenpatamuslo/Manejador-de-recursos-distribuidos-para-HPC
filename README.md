@@ -1,7 +1,7 @@
 # Manejador-de-recursos-distribuidos-para-HPC
 Trabajo practico de la materia Sistemas Operativos I
 
-# Integrantes
+## Integrantes
 Lucas Lamberti,
 Agustin Jaffre,
 Franco Bramucci,
@@ -19,20 +19,22 @@ Ayrton Cuffaro
 
 Para construir todo (agente C + módulos Erlang):
 > make
-# Compilar C
+### Compilar C
 > make all_c  
-# Compilar Erlang
+### Compilar Erlang
 > make all_erl
 
-# Ejecución servidor:
+## Ejecución servidor:
 > ./server <MI_IP> <MI_PUERTO_TCP> <IP_BROADCAST> <DIR_LOCAL> # Ejecución del servidor de c
 
-# Ejecución Erlang:
+## Ejecución Erlang:
 > erl -> job_scheduler:scheduler_init(MI_PUERTO_TCP).
 
 ## Limpieza:
 > make clean      # Elimina objetos, ejecutable y .beam
+
 > make clean_c    # Solo limpia C
+
 > make clean_erl  # Solo limpia Erlang
 
 
