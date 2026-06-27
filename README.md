@@ -26,6 +26,7 @@ Para construir todo (agente C + módulos Erlang):
 
 # Ejecución:
 > ./server <MI_IP> <MI_PUERTO_TCP> <IP_BROADCAST> <DIR_LOCAL> # Ejecución del servidor de c
+
 > erl -> job_scheduler:scheduler_init(MI_PUERTO_TCP).
 
 ## Limpieza:
