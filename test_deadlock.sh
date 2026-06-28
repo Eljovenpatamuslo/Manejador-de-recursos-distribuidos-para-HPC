@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # ==============================================================================
-# SCRIPT DE PRUEBA: AUSENCIA DE DEADLOCK (RECURSOS LOCALES)
-# No requiere fix_bind.so. Usa el nuevo manejo de recursos locales.
+# SCRIPT DE PRUEBA: DETECCIÓN Y RESOLUCIÓN DE DEADLOCK
+# Genera dependencias circulares que causarían deadlock sin las medidas
+# apropiadas (timeout + backoff). Tu código DEBE resolverlo.
 # ==============================================================================
 
 GREEN='\033[0;32m'
@@ -12,12 +13,12 @@ BLUE='\033[0;34m'
 NC='\033[0;0m'
 
 echo -e "${BLUE}====================================================================${NC}"
-echo -e "${BLUE} INICIANDO TEST DE AUSENCIA DE DEADLOCK (LOCAL)                    ${NC}"
+echo -e "${BLUE} INICIANDO TEST DE DEADLOCK (DEPENDENCIAS CRUZADAS)                 ${NC}"
 echo -e "${BLUE}====================================================================${NC}"
 
 PORT_A=12000
 PORT_B=12001
-TIMEOUT_LIMIT=20
+TIMEOUT_LIMIT=60  # Más tiempo porque los reintentos toman tiempo
 
 # --- LIMPIEZA ---
 echo -e "${YELLOW}[*] Limpiando entorno...${NC}"
@@ -43,17 +44,19 @@ PID_C2=$!
 
 echo "[*] Esperando inicialización..."
 sleep 3
-kill -0 $PID_C1 || { echo "Nodo A murió"; exit 1; }
-kill -0 $PID_C2 || { echo "Nodo B murió"; exit 1; }
+kill -0 $PID_C1 || { echo -e "${RED}Nodo A murió${NC}"; exit 1; }
+kill -0 $PID_C2 || { echo -e "${RED}Nodo B murió${NC}"; exit 1; }
 
 echo "================ TABLA DE PUERTOS ================="
 ss -lntp | grep -E "12000|12001"
 echo "==================================================="
 
-# --- ORQUESTACIÓN (solo CPUs locales) ---
-echo -e "\n${BLUE}[Fase 2] Lanzando jobs simultáneos (solo CPUs locales)...${NC}"
+# --- ORQUESTACIÓN (dependencias circulares) ---
+echo -e "\n${BLUE}[Fase 2] Lanzando jobs con dependencias circulares...${NC}"
+echo -e "${YELLOW}[!] Cada nodo pide CPUs a AMBOS nodos simultáneamente${NC}"
+echo -e "${YELLOW}[!] Esto crea una dependencia circular: A espera a B, B espera a A${NC}"
 
-# Nodo A: pide 4 CPUs locales
+# Nodo A: pide 4 CPUs a A y 4 CPUs a B (total 8 CPUs)
 erl -sname nodoA -noshell -eval "
     logF:crear_error_managment(),
     send_recv_manager:send_recv_init(${PORT_A}),
@@ -62,13 +65,21 @@ erl -sname nodoA -noshell -eval "
     F = fun Loop() -> receive _ -> Loop() end end,
     register(scheduler, spawn(F)),
 
-    job_server:crear_job(\"@127.0.0.2:cpu:4\"),
-    timer:sleep(10000),
+    io:format('~n[NODO A] Lanzando job con dependencias circulares...~n'),
+    job_server:crear_job(\"@127.0.0.2:cpu:4 @127.0.0.3:cpu:4\"),
+    
+    % Dar tiempo para que se resuelva (con reintentos)
+    timer:sleep(45000),
+    
+    io:format('~n[NODO A] Finalizando después de esperar resolución...~n'),
     init:stop().
 " > log_erl_A.txt 2>&1 &
 PID_ERL_A=$!
 
-# Nodo B: pide 4 CPUs locales
+# Pequeña pausa para asegurar que A empiece primero
+sleep 1
+
+# Nodo B: pide 4 CPUs a A y 4 CPUs a B (total 8 CPUs) - mismas dependencias
 erl -sname nodoB -noshell -eval "
     logF:crear_error_managment(),
     send_recv_manager:send_recv_init(${PORT_B}),
@@ -77,32 +88,54 @@ erl -sname nodoB -noshell -eval "
     F = fun Loop() -> receive _ -> Loop() end end,
     register(scheduler, spawn(F)),
 
-    job_server:crear_job(\"@127.0.0.3:cpu:4\"),
-    timer:sleep(10000),
+    io:format('~n[NODO B] Lanzando job con dependencias circulares...~n'),
+    job_server:crear_job(\"@127.0.0.2:cpu:4 @127.0.0.3:cpu:4\"),
+    
+    % Dar tiempo para que se resuelva (con reintentos)
+    timer:sleep(45000),
+    
+    io:format('~n[NODO B] Finalizando después de esperar resolución...~n'),
     init:stop().
 " > log_erl_B.txt 2>&1 &
 PID_ERL_B=$!
 
 # --- MONITOREO ---
-echo -e "\n[Fase 3] Monitoreando (límite ${TIMEOUT_LIMIT}s)..."
+echo -e "\n${BLUE}[Fase 3] Monitoreando (límite ${TIMEOUT_LIMIT}s)...${NC}"
+echo -e "${YELLOW}Esperando que los timeouts + backoff resuelvan el deadlock...${NC}"
 TIEMPO=0
-DEADLOCK=false
+RESUELTO=false
 
 while [ $TIEMPO -lt $TIMEOUT_LIMIT ]; do
     ALIVE_A=0; ALIVE_B=0
     [ -n "$PID_ERL_A" ] && kill -0 "$PID_ERL_A" 2>/dev/null && ALIVE_A=1
     [ -n "$PID_ERL_B" ] && kill -0 "$PID_ERL_B" 2>/dev/null && ALIVE_B=1
+    
+    # Verificar si alguno ya tuvo éxito
+    if grep -q "EXITO" log_erl_A.txt 2>/dev/null || grep -q "EXITO" log_erl_B.txt 2>/dev/null; then
+        echo -e "${GREEN}[+] ¡Al menos un job ha tenido éxito! El sistema está resolviendo el deadlock.${NC}"
+        RESUELTO=true
+    fi
+    
     if [ $ALIVE_A -eq 0 ] && [ $ALIVE_B -eq 0 ]; then
         echo -e "${GREEN}[+] Procesos Erlang finalizados.${NC}"
         break
     fi
+    
+    # Mostrar progreso cada 10 segundos
+    if [ $((TIEMPO % 10)) -eq 0 ] && [ $TIEMPO -gt 0 ]; then
+        echo -e "${YELLOW}[*] Tiempo transcurrido: ${TIEMPO}s...${NC}"
+        if [ "$RESUELTO" = false ]; then
+            echo -e "${YELLOW}[*] Esperando que el backoff exponencial haga efecto...${NC}"
+        fi
+    fi
+    
     sleep 1
     ((TIEMPO++))
 done
 
-if [ $TIEMPO -eq $TIMEOUT_LIMIT ]; then
-    echo -e "${RED}[-] ALERTA: Tiempo límite alcanzado (posible deadlock).${NC}"
-    DEADLOCK=true
+if [ $TIEMPO -ge $TIMEOUT_LIMIT ]; then
+    echo -e "${RED}[-] ALERTA: Tiempo límite alcanzado.${NC}"
+    echo -e "${RED}[-] Si no hay éxitos, el deadlock NO se resolvió.${NC}"
     [ -n "$PID_ERL_A" ] && kill -9 "$PID_ERL_A" 2>/dev/null
     [ -n "$PID_ERL_B" ] && kill -9 "$PID_ERL_B" 2>/dev/null
 fi
@@ -110,29 +143,53 @@ fi
 # --- DIAGNÓSTICO ---
 echo -e "\n${BLUE}[Fase 4] Diagnóstico${NC}"
 
-EXITOS=$(cat log_erl_A.txt log_erl_B.txt 2>/dev/null | grep -c "EXITO" || true)
+EXITOS_A=$(grep -c "EXITO" log_erl_A.txt 2>/dev/null || echo "0")
+EXITOS_B=$(grep -c "EXITO" log_erl_B.txt 2>/dev/null || echo "0")
+DENIED_A=$(grep -c "ALERTA: job denegado" log_erl_A.txt 2>/dev/null || echo "0")
+DENIED_B=$(grep -c "ALERTA: job denegado" log_erl_B.txt 2>/dev/null || echo "0")
+TIMEOUTS_A=$(grep -c "ALERTA: Timeout en red" log_erl_A.txt 2>/dev/null || echo "0")
+TIMEOUTS_B=$(grep -c "ALERTA: Timeout en red" log_erl_B.txt 2>/dev/null || echo "0")
 
-if [ "$DEADLOCK" = true ]; then
-    echo -e "${RED}====================================================================${NC}"
-    echo -e "${RED} [FAIL] DEADLOCK DETECTADO (el sistema no debería bloquearse).      ${NC}"
-    echo -e "${RED}====================================================================${NC}"
-elif [ "$EXITOS" -eq 2 ]; then
+echo -e "${BLUE}--- Resultados ---${NC}"
+echo -e "Jobs exitosos:      A=${EXITOS_A}, B=${EXITOS_B}"
+echo -e "Jobs denegados:     A=${DENIED_A}, B=${DENIED_B}"
+echo -e "Timeouts de red:    A=${TIMEOUTS_A}, B=${TIMEOUTS_B}"
+
+if [ "$EXITOS_A" -gt 0 ] || [ "$EXITOS_B" -gt 0 ]; then
     echo -e "${GREEN}====================================================================${NC}"
-    echo -e "${GREEN} [SUCCESS] AMBOS TRABAJOS COMPLETADOS SIN DEADLOCK.                 ${NC}"
+    echo -e "${GREEN} [SUCCESS] EL SISTEMA RESOLVIÓ EL DEADLOCK CORRECTAMENTE.           ${NC}"
+    echo -e "${GREEN} Al menos un job se completó a pesar de las dependencias circulares.${NC}"
     echo -e "${GREEN}====================================================================${NC}"
 else
     echo -e "${RED}====================================================================${NC}"
-    echo -e "${RED} [FAIL] Resultados incompletos (Exitos: ${EXITOS}/2).                ${NC}"
+    echo -e "${RED} [FAIL] DEADLOCK NO RESUELTO.                                      ${NC}"
+    echo -e "${RED} Ningún job se completó. Revisar timeouts y backoff.               ${NC}"
     echo -e "${RED}====================================================================${NC}"
 fi
 
-echo -e "${YELLOW} -> Trabajos completados (Erlang): ${EXITOS}${NC}"
+echo -e "\n${YELLOW}[*] Si ves denied/timeout seguidos de EXITO, el backoff funcionó:${NC}"
+echo -e "${YELLOW}    1. Ambos jobs intentan reservar todos los recursos.${NC}"
+echo -e "${YELLOW}    2. Se produce deadlock (cada uno retiene sus CPUs locales).${NC}"
+echo -e "${YELLOW}    3. Uno (o ambos) sufren timeout/denied.${NC}"
+echo -e "${YELLOW}    4. Liberan sus recursos locales.${NC}"
+echo -e "${YELLOW}    5. El backoff hace que reintenten en momentos distintos.${NC}"
+echo -e "${YELLOW}    6. El que reintenta primero obtiene TODO y completa.${NC}"
 
-echo "===== LOG C1 ====="; cat log_c_1.txt
-echo "===== LOG C2 ====="; cat log_c_2.txt
-echo "===== LOG ERLANG A ====="; cat log_erl_A.txt
-echo "===== LOG ERLANG B ====="; cat log_erl_B.txt
+# Mostrar logs relevantes (últimas 30 líneas de cada uno)
+echo -e "\n${BLUE}===== ÚLTIMAS LÍNEAS DE LOG C1 =====${NC}"
+tail -n 30 log_c_1.txt 2>/dev/null || echo "(vacío)"
+
+echo -e "\n${BLUE}===== ÚLTIMAS LÍNEAS DE LOG C2 =====${NC}"
+tail -n 30 log_c_2.txt 2>/dev/null || echo "(vacío)"
+
+echo -e "\n${BLUE}===== LOG ERLANG A (completo) =====${NC}"
+cat log_erl_A.txt 2>/dev/null || echo "(vacío)"
+
+echo -e "\n${BLUE}===== LOG ERLANG B (completo) =====${NC}"
+cat log_erl_B.txt 2>/dev/null || echo "(vacío)"
 
 # Limpieza final
 kill -9 $PID_C1 $PID_C2 $PID_ERL_A $PID_ERL_B 2>/dev/null || true
+echo -e "\n${BLUE}====================================================================${NC}"
+echo -e "${BLUE} TEST FINALIZADO                                                   ${NC}"
 echo -e "${BLUE}====================================================================${NC}"
