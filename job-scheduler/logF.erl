@@ -23,7 +23,7 @@ logServer() ->
             ok = io:fwrite(Msg,Args),
             Str = io_lib:format(Msg,Args),
             file:write_file("logErl.txt",[string:chomp(Str) ++ "\n"],[append]),
-            log(msg,"---Terminando---~n"),
+            file:write_file("logErl.txt","---TERMINADO---\n",[append]),
             timer:sleep(?TIEMPO_ANTES_DE_TERMINAR),
             exit(fatal)
     end.

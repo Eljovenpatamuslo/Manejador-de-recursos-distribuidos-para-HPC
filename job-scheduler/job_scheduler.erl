@@ -1,8 +1,3 @@
-%forma de mandarle los datos
-% [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
-
-%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
-
 -module(job_scheduler).
 
 -export([scheduler_init/1,scheduler/0,get_pid_scheduler/0]).

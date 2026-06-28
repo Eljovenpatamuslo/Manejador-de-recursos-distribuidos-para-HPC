@@ -1,8 +1,3 @@
-%forma de mandarle los datos
-% [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
-
-%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
-
 -module(send_recv_manager).
 
 -export([send_recv_init/1,conectarse_a_nodo_local/2,esperar_respuesta_nodo/1,
@@ -65,9 +60,9 @@ esperar_respuesta_nodo(SockC) ->
             case job_scheduler:get_pid_scheduler() of
                 undefined -> 
                     %% Si el scheduler ya no existe (ej. fin de test), lo ignoramos
-                    logF:log(msg, "Aviso: Se recibió NODES pero el scheduler ya no existe.~n");
+                    logF:log(fatal, "Aviso: Se recibió NODES pero el scheduler ya no existe.~n");
                 Scheduler -> 
-                    Scheduler ! {ok, Nodes}, logF:log(msg,"3")
+                    Scheduler ! {ok, Nodes}
             end,
             esperar_respuesta_nodo(SockC);
         {error,Razon} -> 
@@ -101,7 +96,7 @@ send_manager(SockC) ->
             end;
         getNodes -> 
             case gen_tcp:send(SockC, "GET_NODES\n") of
-                ok -> ok, logF:log(msg,"2");
+                ok -> ok;
                 {error,Razon} -> 
                     logF:log(msg,"Error al enviar GET_NODES, razon: ~p ~n",[Razon]),
                     send_manager(SockC)
@@ -114,7 +109,6 @@ send_manager(SockC) ->
 
 %funcion para preguntarle al agente de c sobre todos los nodos de la red
 obtener_nodos() ->
-    logF:log(msg,"1"),
     enviar_send(getNodes),
     receive
         {ok,Nodos} -> {ok,Nodos};
@@ -130,7 +124,7 @@ obtener_nodos() ->
 enviar_send(Msg) ->
     case whereis(send_manager) of
         undefined -> 
-            logF:log(msg,"Send_manager no esta registrado~n");
+            logF:log(fatal,"Send_manager no esta registrado~n");
         SendManagerPid -> SendManagerPid ! Msg
 
     end.

@@ -1,5 +1,10 @@
--module(manejador_recursos).
+%forma de mandarle los datos
+% [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
 
+%NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
+
+
+-module(manejador_recursos).
 
 -export([obtener_recursos_para_jobs/1,format_nodes/1,obtener_y_formatear_nodos/0]).
 
@@ -45,17 +50,16 @@ format_nodes([Node | Nodes]) ->
 
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
 obtener_recursos_para_jobs(ParsedNodes) ->
-    Nod = [f(X) || X <- ParsedNodes],
-    %logF:log(msg,"f(ParsedNodes):~p ~n",[Nod]),
+    Nod = [asignar_recursos_random(X) || X <- ParsedNodes],
     %%filtramos listas vacías
-    lists:filter(fun(E) -> E /= " " end, h(Nod)).
+    lists:filter(fun(E) -> E /= " " end, repartir_recursos_para_trabajos(Nod)).
 
 %% caso base
-f({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
+asignar_recursos_random({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
     [];
 
 %% caso recursivo
-f({#direccion{ip=Ip, puerto=_} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
+asignar_recursos_random({#direccion{ip=Ip, puerto=_} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
     
     CantCpu = if
         CpuR > 0 -> rand:uniform(CpuR); 
@@ -103,7 +107,7 @@ f({#direccion{ip=Ip, puerto=_} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) 
     
     NodeStr = StrCpu ++ StrMem ++ StrGpu,
     Restantes = #recursos{cpu=CpuR-CantCpu, mem=MemR-CantMem, gpu=GpuR-CantGpu},
-    Rest = f({Dir, Restantes}),
+    Rest = asignar_recursos_random({Dir, Restantes}),
     
     if
         Rest == [] -> [NodeStr | Rest];
@@ -111,26 +115,26 @@ f({#direccion{ip=Ip, puerto=_} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) 
     end.
 
 
-h([]) ->
+repartir_recursos_para_trabajos([]) ->
     [];
-h(V) ->
-    {G, V1} = g(V, []),
+repartir_recursos_para_trabajos(V) ->
+    {G, V1} = repartir_recursos_para_trabajos_aux(V, []),
     case G of
-        [] -> h(V1);
-        _  -> [G | h(V1)]
+        [] -> repartir_recursos_para_trabajos(V1);
+        _  -> [G | repartir_recursos_para_trabajos(V1)]
     end.
 
-g([], V) ->
+repartir_recursos_para_trabajos_aux([], V) ->
     {[], V};
-g([Node | Nodes], V1) ->
+repartir_recursos_para_trabajos_aux([Node | Nodes], V1) ->
     case Node of
         [] ->
-            g(Nodes, V1);
+            repartir_recursos_para_trabajos_aux(Nodes, V1);
         _ ->
             Recurso = lists:nth(rand:uniform(length(Node)), Node),
             NewNode = lists:delete(Recurso, Node),
             
-            {N, V} = g(Nodes, [NewNode | V1]),
+            {N, V} = repartir_recursos_para_trabajos_aux(Nodes, [NewNode | V1]),
             
             case N of
                 %%parseamos y ordenamos los strings

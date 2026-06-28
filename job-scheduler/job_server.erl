@@ -1,8 +1,3 @@
-%forma de mandarle los datos
-% [IP:<ip>:PUERTO:<puerto>,CPU:<Ncpu>,MEM,<Nmem>,(GPU:<Ngpu> opcional)]
-
-% ejemplo: NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
-
 -module(job_server).
 
 -export([iniciar_job_server/0,job_server/1,crear_job/1,
@@ -10,8 +5,8 @@
     aplicar_timeout/2,enviar_estado_job/2,agregar_job/2,remover_job/1]).
 
 -define(SEC, 1000).
--define(TIMEOUT, 100 * ?SEC).
--define(INTENTOS_HASTA_DESCARTAR, 10).
+-define(TIMEOUT, 30 * ?SEC).
+-define(INTENTOS_HASTA_DESCARTAR, 5).
 
 %inicia todo lo necesario para el job_server
 iniciar_job_server() ->
@@ -71,25 +66,24 @@ adquirir_loop(JobId, Recursos, Intentos) ->
     
     receive
         jobGranted -> 
-           logF:log(msg,"[Job ~p] EXITO! Todos los recursos concedidos.~n", [JobId]),
+            logF:log(msg,"[Job ~p] EXITO! Todos los recursos concedidos.~n", [JobId]),
             ejecutar_trabajo(JobId);
             
         jobDenied ->
-            logF:log(msg,"[Job ~p] ALERTA: job denegado (~p). Iniciando aborto...~n", [JobId, Recursos]),
-            manejar_fallo(JobId, Recursos, Intentos);
+            logF:log(msg,"[Job ~p] Trabajo denegado, descartando...~n", [JobId, Recursos]),
+            remover_job(JobId);
             
         jobTimeout ->
-            logF:log(msg,"[Job ~p] ALERTA: Timeout en red por recursos (~p).~n", [JobId, Recursos]),
-            manejar_fallo(JobId, Recursos, Intentos);
-        closed -> closed
+            logF:log(msg,"[Job ~p] Timeout~n", [JobId, Recursos]),
+            manejar_fallo(JobId, Recursos, Intentos)
     after ?TIMEOUT ->
-        logF:log(msg,"[Job ~p] ERROR CRITICO: Timeout interno del planificador.~n", [JobId]),
-        manejar_fallo(JobId, Recursos, Intentos)
+        logF:log(msg,"[Job ~p] No hubo respuesta, descartando...~n", [JobId]),
+        remover_job(JobId)
     end.
 
 %si pasan mas de ciertos intentos, el trabajo se descarta
 manejar_fallo(JobId, _ , ?INTENTOS_HASTA_DESCARTAR) ->
-    logF:log(msg,"[Job ~p] se llego al limite de intentos, descartando trabajo~n", [JobId]),
+    logF:log(msg,"[Job ~p] se llego al limite de intentos, descartando...~n", [JobId]),
     remover_job(JobId);
 
 %si hay un denied o un timeout espera
