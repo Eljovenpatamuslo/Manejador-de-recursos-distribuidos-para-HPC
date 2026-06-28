@@ -7,10 +7,11 @@
 
 -export([iniciar_job_server/0,job_server/1,crear_job/1,
     ejecutar_trabajo/1,adquirir_loop/3,manejar_fallo/3,
-    aplicar_timeout/2,enviar_estado_job/2]).
+    aplicar_timeout/2,enviar_estado_job/2,agregar_job/2,remover_job/1]).
 
 -define(SEC, 1000).
--define(TIMEOUT, 1000 * ?SEC).
+-define(TIMEOUT, 100 * ?SEC).
+-define(INTENTOS_HASTA_DESCARTAR, 10).
 
 %inicia todo lo necesario para el job_server
 iniciar_job_server() ->
@@ -49,7 +50,7 @@ job_server(JobMap) ->
 crear_job(Resource) -> 
     JobId = erlang:unique_integer([positive]),
     JobPid = spawn(?MODULE,adquirir_loop,[JobId,Resource,0]),
-    job_server ! {add,JobPid,JobId}.
+    agregar_job(JobPid,JobId).
 
 %espera un rato haciendo nada y libera el trabajo
 ejecutar_trabajo(JobId) ->
@@ -57,8 +58,8 @@ ejecutar_trabajo(JobId) ->
     timer:sleep(5 * ?SEC),
     
     logF:log(msg,"[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
-    send_manager ! {jobRelease,JobId},
-    job_server ! {remove,JobId},
+    send_recv_manager:enviar_send({jobRelease,JobId}),
+    remover_job(JobId),
     logF:log(msg,"[Job ~p] Terminado correctamente.~n", [JobId]),
     ok.
 
@@ -86,6 +87,11 @@ adquirir_loop(JobId, Recursos, Intentos) ->
         manejar_fallo(JobId, Recursos, Intentos)
     end.
 
+%si pasan mas de ciertos intentos, el trabajo se descarta
+manejar_fallo(JobId, _ , ?INTENTOS_HASTA_DESCARTAR) ->
+    logF:log(msg,"[Job ~p] se llego al limite de intentos, descartando trabajo~n", [JobId]),
+    remover_job(JobId);
+
 %si hay un denied o un timeout espera
 manejar_fallo(JobId, Recursos, Intentos) ->
     %%Si agarró un recurso, entonces lo suelta
@@ -98,10 +104,8 @@ manejar_fallo(JobId, Recursos, Intentos) ->
     logF:log(msg,"[Job ~p] Reiniciando ciclo de peticiones (Intento ~p).~n", [JobId, SiguienteIntento]),
     adquirir_loop(JobId, Recursos, SiguienteIntento).
 
-
 %formula para el timeout
 aplicar_timeout(JobId, Intentos) ->
-
     TiempoBase = 150, 
     Limitar = lists:min([Intentos, 5]), 
     
@@ -113,4 +117,21 @@ aplicar_timeout(JobId, Intentos) ->
     timer:sleep(TiempoTotalSleep).
 
 enviar_estado_job(Status,JobId) ->
-    job_server ! {find,Status,JobId}.
+    case whereis(job_server) of 
+        undefined -> logF:log(fatal,"El job_server no esta registrado~n");
+        JobServerPid -> JobServerPid ! {find,Status,JobId}
+    end.
+
+agregar_job(JobPid,JobId) ->
+    case whereis(job_server) of 
+        undefined -> logF:log(fatal,"El job_server no esta registrado~n");
+        JobServerPid -> JobServerPid ! {add,JobPid,JobId}
+    end.
+    
+
+remover_job(JobId) ->
+    case whereis(job_server) of 
+        undefined -> logF:log(fatal,"El job_server no esta registrado~n");
+        JobServerPid -> JobServerPid ! {remove,JobId}
+    end.
+    

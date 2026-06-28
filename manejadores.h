@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_MSG_LEN 256
+#define MAX_MSG_LEN 1024
 
 typedef enum {
     CLIENTE_ERLANG,

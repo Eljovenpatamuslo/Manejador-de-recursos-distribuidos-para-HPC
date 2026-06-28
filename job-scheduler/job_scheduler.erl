@@ -37,4 +37,7 @@ scheduler() ->
 
 %obtiene el id de proceso del scheduler
 get_pid_scheduler() ->
-    whereis(scheduler).
+    case whereis(scheduler) of
+        undefined -> logF:log(fatal,"scheduler no esta registrado"),undefined;
+        SchedulerPid -> SchedulerPid
+    end.
