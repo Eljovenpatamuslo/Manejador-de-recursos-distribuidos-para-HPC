@@ -71,6 +71,7 @@ adquirir_loop(JobId, Recursos, Intentos) ->
             
         jobDenied ->
             logF:log(msg,"[Job ~p] Trabajo denegado, descartando...~n", [JobId, Recursos]),
+            send_recv_manager:enviar_send({jobRelease, JobId}), %libera los recursos que haya adquirido
             remover_job(JobId);
             
         jobTimeout ->
@@ -78,12 +79,14 @@ adquirir_loop(JobId, Recursos, Intentos) ->
             manejar_fallo(JobId, Recursos, Intentos)
     after ?TIMEOUT ->
         logF:log(msg,"[Job ~p] No hubo respuesta, descartando...~n", [JobId]),
+        send_recv_manager:enviar_send({jobRelease, JobId}), %libera los recursos que haya adquirido
         remover_job(JobId)
     end.
 
 %si pasan mas de ciertos intentos, el trabajo se descarta
 manejar_fallo(JobId, _ , ?INTENTOS_HASTA_DESCARTAR) ->
     logF:log(msg,"[Job ~p] se llego al limite de intentos, descartando...~n", [JobId]),
+    send_recv_manager:enviar_send({jobRelease, JobId}), %libera los recursos que haya adquirido
     remover_job(JobId);
 
 %si hay un denied o un timeout espera
