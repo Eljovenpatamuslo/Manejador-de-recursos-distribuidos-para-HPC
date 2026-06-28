@@ -130,6 +130,9 @@ void tablajobs_borrar_por_nodo(TablaJobs tabla, char ip[],
 
     pthread_mutex_unlock(&tabla->mutex);
 
+    // Limpiar las solicitudes pendientes en las colas de recursos
+    limpiar_solicitudes_nodo(recursos, ip, puerto);
+
     while (jobsABorrar != NULL) {
         JobActivo *sig = jobsABorrar->sigJobId;
 

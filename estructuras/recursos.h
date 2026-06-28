@@ -83,4 +83,10 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
  */
 int comp_recursos(RecursosReservados a, RecursosReservados b);
 
+/**
+ * Elimina todas las solicitudes pendientes de un nodo específico (IP+puerto)
+ * en las colas de espera de todos los recursos.
+ */
+void limpiar_solicitudes_nodo(RecursosNodo recursos, const char *ip, unsigned short puerto);
+
 #endif /* __RECURSOS_H__ */

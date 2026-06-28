@@ -5,8 +5,9 @@
     aplicar_timeout/2,enviar_estado_job/2,agregar_job/2,remover_job/1]).
 
 -define(SEC, 1000).
--define(TIMEOUT, 30 * ?SEC).
--define(INTENTOS_HASTA_DESCARTAR, 5).
+-define(TIMEOUT, 15 * ?SEC).
+-define(INTENTOS_HASTA_DESCARTAR, 2).
+-define(TIEMPO_DE_TRABAJO, 1* ?SEC).
 
 %inicia todo lo necesario para el job_server
 iniciar_job_server() ->
@@ -50,7 +51,7 @@ crear_job(Resource) ->
 %espera un rato haciendo nada y libera el trabajo
 ejecutar_trabajo(JobId) ->
     logF:log(msg,"[Job ~p] Ejecutando procesamiento en el cluster simulado...~n", [JobId]),
-    timer:sleep(5 * ?SEC),
+    timer:sleep(?TIEMPO_DE_TRABAJO),
     
     logF:log(msg,"[Job ~p] Procesamiento completado. Liberando infraestructura.~n", [JobId]),
     send_recv_manager:enviar_send({jobRelease,JobId}),
@@ -78,9 +79,8 @@ adquirir_loop(JobId, Recursos, Intentos) ->
             logF:log(msg,"[Job ~p] Timeout~n", [JobId, Recursos]),
             manejar_fallo(JobId, Recursos, Intentos)
     after ?TIMEOUT ->
-        logF:log(msg,"[Job ~p] No hubo respuesta, descartando...~n", [JobId]),
-        send_recv_manager:enviar_send({jobRelease, JobId}), %libera los recursos que haya adquirido
-        remover_job(JobId)
+        logF:log(msg,"[Job ~p] No hubo respuesta, reintentando...~n", [JobId]),
+        manejar_fallo(JobId, Recursos, Intentos)
     end.
 
 %si pasan mas de ciertos intentos, el trabajo se descarta

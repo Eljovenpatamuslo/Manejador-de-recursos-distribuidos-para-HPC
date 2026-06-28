@@ -105,16 +105,23 @@ void *gestionar_epoll(void *arg) {
                                      EPOLL_CTL_MOD);
             } else {
                 int sockClosed = leer_y_procesar_cliente(
-                    contexto, recNodo, tablaJobs, tablaNodos, erlangFd, epollFd,
-                    miIp);
+                contexto, recNodo, tablaJobs, tablaNodos, erlangFd, epollFd,miIp);
 
                 if (sockClosed) {
+                    // Si es un agente C, limpiar sus jobs y solicitudes pendientes
+                    if (contexto->tipo == CLIENTE_AGENTE_C) {
+                        DatosNodo *datos = tablanodos_buscar(tablaNodos, contexto->ip);
+                        if (datos != NULL) {
+                            tablajobs_borrar_por_nodo(tablaJobs, contexto->ip, 
+                                                     datos->puerto, recNodo);
+                        }
+                    }
                     close(contexto->fd);
                     free(contexto);
                 } else {
                     agregar_socket_epoll(epollFd, contexto->fd,
-                                         EPOLLIN | EPOLLONESHOT, contexto,
-                                         EPOLL_CTL_MOD);
+                    EPOLLIN | EPOLLONESHOT, contexto,
+                    EPOLL_CTL_MOD);
                 }
             }
         }

@@ -1,5 +1,39 @@
 #include "recursos.h"
 
+// Función auxiliar para eliminar solicitudes de un nodo específico de una cola
+static void limpiar_cola_por_nodo(Cola cola, const char *ip, unsigned short puerto) {
+    if (cola_es_vacia(cola)) return;
+    
+    // Vamos a reconstruir la cola sin las solicitudes del nodo
+    GNode *actual = cola->primero;
+    GNode *anterior = NULL;
+    
+    while (actual != NULL) {
+        Solicitud sol = (Solicitud)actual->dato;
+        GNode *siguiente = actual->sig;
+        
+        if (strcmp(sol->ip, ip) == 0 && sol->puerto == puerto) {
+            // Esta solicitud es del nodo desconectado -> eliminarla
+            if (anterior == NULL) {
+                cola->primero = siguiente;
+            } else {
+                anterior->sig = siguiente;
+            }
+            
+            if (siguiente == NULL) {
+                cola->ultimo = anterior;
+            }
+            
+            free(sol);
+            free(actual);
+        } else {
+            anterior = actual;
+        }
+        
+        actual = siguiente;
+    }
+}
+
 Recurso inicializar_recurso(unsigned long capacidad) {
     Recurso recurso = malloc(sizeof(struct _Recurso));
     assert(recurso != NULL);
@@ -189,4 +223,23 @@ RecursosReservados inicializar_recursos_reservados(TipoRecurso rec,
 int comp_recursos(RecursosReservados a, RecursosReservados b) {
     return a->cpu == b->cpu && a->mem == b->mem && a->gpu == b->gpu;
 }
+
+void limpiar_solicitudes_nodo(RecursosNodo recursos, const char *ip, 
+                               unsigned short puerto) {
+    // Limpiar cola de CPU
+    pthread_mutex_lock(&recursos->cpu->mutex);
+    limpiar_cola_por_nodo(recursos->cpu->solicitudPend, ip, puerto);
+    pthread_mutex_unlock(&recursos->cpu->mutex);
+    
+    // Limpiar cola de MEM
+    pthread_mutex_lock(&recursos->mem->mutex);
+    limpiar_cola_por_nodo(recursos->mem->solicitudPend, ip, puerto);
+    pthread_mutex_unlock(&recursos->mem->mutex);
+    
+    // Limpiar cola de GPU
+    pthread_mutex_lock(&recursos->gpu->mutex);
+    limpiar_cola_por_nodo(recursos->gpu->solicitudPend, ip, puerto);
+    pthread_mutex_unlock(&recursos->gpu->mutex);
+}
+
 
