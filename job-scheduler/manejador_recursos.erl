@@ -10,7 +10,7 @@
 obtener_y_formatear_nodos() ->
     case send_recv_manager:obtener_nodos() of
         {ok,Response} ->
-            logF:log(msg,"Nods ~p ~n",[Response]), 
+            logF:log(msg,"Nodos ~p ~n",[Response]), 
             Nodes = string:lexemes(Response,";"),
             ParsedNodes = format_nodes(Nodes),
             ParsedNodes;
@@ -55,7 +55,7 @@ f({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
     [];
 
 %% caso recursivo
-f({#direccion{ip=Ip, puerto=Puerto} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
+f({#direccion{ip=Ip, puerto=_} = Dir, #recursos{cpu=CpuR, mem=MemR, gpu=GpuR}}) ->
     
     CantCpu = if
         CpuR > 0 -> rand:uniform(CpuR); 

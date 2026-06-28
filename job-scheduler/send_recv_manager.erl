@@ -115,7 +115,7 @@ send_manager(SockC) ->
 %funcion para preguntarle al agente de c sobre todos los nodos de la red
 obtener_nodos() ->
     logF:log(msg,"1"),
-    send_manager ! getNodes,
+    enviar_send(getNodes),
     receive
         {ok,Nodos} -> {ok,Nodos};
         {error,Razon} -> 
@@ -128,4 +128,10 @@ obtener_nodos() ->
 
 %envia al send_manager lo que este en Msg
 enviar_send(Msg) ->
-    send_manager ! Msg.
+    case whereis(send_manager) of
+        undefined -> 
+            logF:log(msg,"Send_manager no esta registrado~n");
+        SendManagerPid -> SendManagerPid ! Msg
+
+    end.
+    
