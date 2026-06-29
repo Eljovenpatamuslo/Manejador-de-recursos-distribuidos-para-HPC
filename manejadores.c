@@ -276,7 +276,7 @@ void liberar_job(TablaJobs tablaJobs, unsigned long jobId, int epollFd) {
         int fd = ((ClienteConexion *)actual->datos->datosCliente)->fd;
         enviar_formateado(fd, "RELEASE %lu %s %d\n", jobId, rec, cant);
         shutdown(fd, SHUT_WR);
-
+        close(fd);
         actual = actual->sig;
     }
 }

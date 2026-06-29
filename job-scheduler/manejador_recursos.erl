@@ -3,13 +3,15 @@
 
 %NODES 192.168.1.10:8100:cpu:4:mem:8192:gpu:1;192.168.1.11:8101:cpu:2:mem:4096
 
-
 -module(manejador_recursos).
 
 -export([obtener_recursos_para_jobs/1,format_nodes/1,obtener_y_formatear_nodos/0]).
 
 -record(recursos,{cpu,mem,gpu}).
 -record(direccion,{ip,puerto}).
+
+% Porcentaje máximo de recursos a usar (0.5 = 50%)
+-define(LIMITE_RECURSOS, 0.5).
 
 %obtiene los nodos del agente c y lo formate de la forma [{recursos,direccion},...]
 obtener_y_formatear_nodos() ->
@@ -49,10 +51,26 @@ format_nodes([Node | Nodes]) ->
 
 
 %% Recibe directamente la lista de tuplas [{#direccion{}, #recursos{}}, ...]
+%% Aplica un límite configurable a los recursos antes de repartirlos en trabajos
 obtener_recursos_para_jobs(ParsedNodes) ->
-    Nod = [asignar_recursos_random(X) || X <- ParsedNodes],
+    % Primero limitamos los recursos al porcentaje configurado
+    NodosLimitados = lists:map(fun limitar_recursos/1, ParsedNodes),
+    logF:log(msg,"Recursos limitados al ~p%: ~p~n", [?LIMITE_RECURSOS * 100, NodosLimitados]),
+    
+    % Luego aplicamos la lógica original de reparto aleatorio
+    Nod = [asignar_recursos_random(X) || X <- NodosLimitados],
     %%filtramos listas vacías
     lists:filter(fun(E) -> E /= " " end, repartir_recursos_para_trabajos(Nod)).
+
+
+%% Limita los recursos de un nodo al porcentaje definido en LIMITE_RECURSOS
+limitar_recursos({Dir, #recursos{cpu=Cpu, mem=Mem, gpu=Gpu}}) ->
+    {Dir, #recursos{
+        cpu = trunc(Cpu * ?LIMITE_RECURSOS),
+        mem = trunc(Mem * ?LIMITE_RECURSOS),
+        gpu = trunc(Gpu * ?LIMITE_RECURSOS)
+    }}.
+
 
 %% caso base
 asignar_recursos_random({_Dir, #recursos{cpu=0, mem=0, gpu=0}}) ->
